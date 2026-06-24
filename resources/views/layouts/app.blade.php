@@ -27,6 +27,40 @@
                 </header>
             @endisset
 
+            <!-- Mensajes flash globales (éxito y error) -->
+            @if(session('success'))
+                <div x-data="{ visible: true }" x-show="visible"
+                     x-init="setTimeout(() => visible = false, 4000)"
+                     class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
+                    <div class="flex items-center justify-between bg-green-100 border border-green-400 text-green-800 px-4 py-3 rounded">
+                        <span>✓ {{ session('success') }}</span>
+                        <button @click="visible = false" class="ml-4 text-green-600 hover:text-green-900 font-bold">✕</button>
+                    </div>
+                </div>
+            @endif
+
+            @if(session('error'))
+                <div x-data="{ visible: true }" x-show="visible"
+                     x-init="setTimeout(() => visible = false, 6000)"
+                     class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
+                    <div class="flex items-center justify-between bg-red-100 border border-red-400 text-red-800 px-4 py-3 rounded">
+                        <span>✕ {{ session('error') }}</span>
+                        <button @click="visible = false" class="ml-4 text-red-600 hover:text-red-900 font-bold">✕</button>
+                    </div>
+                </div>
+            @endif
+
+            @if(session('warning'))
+                <div x-data="{ visible: true }" x-show="visible"
+                     x-init="setTimeout(() => visible = false, 5000)"
+                     class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
+                    <div class="flex items-center justify-between bg-yellow-100 border border-yellow-400 text-yellow-800 px-4 py-3 rounded">
+                        <span>⚠ {{ session('warning') }}</span>
+                        <button @click="visible = false" class="ml-4 text-yellow-600 hover:text-yellow-900 font-bold">✕</button>
+                    </div>
+                </div>
+            @endif
+
             <!-- Page Content -->
             <main>
                 {{ $slot }}
