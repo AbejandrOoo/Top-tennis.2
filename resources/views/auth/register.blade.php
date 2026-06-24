@@ -215,7 +215,7 @@
                                 id="password_confirmation" name="password_confirmation" type="password"
                                 x-model="confirm"
                                 class="input-field {{ $errors->has('password_confirmation') ? 'error' : '' }}"
-                                placeholder="Repetí tu contraseña"
+                                placeholder="Repite tu contraseña"
                                 required autocomplete="new-password"
                             >
                         </div>

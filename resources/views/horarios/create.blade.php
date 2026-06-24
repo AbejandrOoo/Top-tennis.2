@@ -66,7 +66,7 @@
                     <input id="fecha" name="fecha" type="date"
                            class="form-input {{ $errors->has('fecha') ? 'border-red-400' : '' }}"
                            min="{{ date('Y-m-d') }}"
-                           value="{{ old('fecha') }}" required>
+                           value="{{ old('fecha', request('fecha')) }}" required>
                     @error('fecha')<p class="mt-1.5 text-xs text-red-500">{{ $message }}</p>@enderror
                 </div>
 
@@ -116,11 +116,11 @@
     <script>
         function horarioForm(todasLasTarifas) {
             return {
-                canchaSeleccionada: '{{ old('cancha_id', '') }}',
+                canchaSeleccionada: '{{ old('cancha_id', request('cancha_id', '')) }}',
                 tarifaSeleccionada: '{{ old('tarifa_id', '') }}',
                 tarifasFiltradas: [],
                 tarifaActual: null,
-                horaInicio: '{{ old('hora_inicio', '') }}',
+                horaInicio: '{{ old('hora_inicio', request('hora_inicio', '')) }}',
                 horaFin:    '{{ old('hora_fin', '') }}',
 
                 init() {

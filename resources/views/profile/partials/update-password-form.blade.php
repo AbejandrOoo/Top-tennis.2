@@ -37,7 +37,7 @@
             <label for="update_password_password_confirmation" class="form-label">Confirmar nueva contraseña</label>
             <input id="update_password_password_confirmation" name="password_confirmation" type="password"
                    class="form-input {{ $errors->updatePassword->has('password_confirmation') ? 'border-red-400' : '' }}"
-                   placeholder="Repetí la nueva contraseña" autocomplete="new-password">
+                   placeholder="Repite la nueva contraseña" autocomplete="new-password">
             @if($errors->updatePassword->has('password_confirmation'))
                 <p class="mt-1.5 text-xs text-red-500">{{ $errors->updatePassword->first('password_confirmation') }}</p>
             @endif

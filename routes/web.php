@@ -11,7 +11,12 @@ Route::get('/', function () {
 });
 
 Route::get('/dashboard', function () {
-    return view('dashboard');
+    $user = auth()->user();
+    $canchasLibres    = \App\Models\Cancha::where('estado', 'Disponible')->count();
+    $reservasActivas  = $user->horarios()->whereIn('estado', ['Reservado', 'Confirmado'])->count();
+    $horariosDisp     = \App\Models\Tarifa::where('estado', 'Activa')->count();
+    $canchas          = \App\Models\Cancha::with(['tarifas' => fn($q) => $q->where('estado','Activa')->orderBy('precio_hora')])->get();
+    return view('dashboard', compact('canchasLibres', 'reservasActivas', 'horariosDisp', 'canchas'));
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
