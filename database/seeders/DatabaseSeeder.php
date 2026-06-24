@@ -2,24 +2,103 @@
 
 namespace Database\Seeders;
 
+use App\Enums\Rol;
+use App\Models\Cancha;
+use App\Models\Tarifa;
 use App\Models\User;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
-    use WithoutModelEvents;
-
-    /**
-     * Seed the application's database.
-     */
     public function run(): void
     {
-        // User::factory(10)->create();
+        // Usuarios de prueba para cada rol
+        User::create([
+            'name'     => 'Administrador',
+            'email'    => 'admin@toptennis.com',
+            'password' => Hash::make('password'),
+            'rol'      => Rol::Admin,
+        ]);
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+        User::create([
+            'name'     => 'Recepcionista',
+            'email'    => 'recepcionista@toptennis.com',
+            'password' => Hash::make('password'),
+            'rol'      => Rol::Recepcionista,
+        ]);
+
+        User::create([
+            'name'     => 'Cliente Demo',
+            'email'    => 'cliente@toptennis.com',
+            'password' => Hash::make('password'),
+            'rol'      => Rol::Cliente,
+        ]);
+
+        // Canchas de ejemplo
+        $cancha1 = Cancha::create([
+            'nombre' => 'Cancha Central',
+            'tipo'   => 'Arcilla',
+            'estado' => 'Disponible',
+        ]);
+
+        $cancha2 = Cancha::create([
+            'nombre' => 'Cancha Norte',
+            'tipo'   => 'Sintética',
+            'estado' => 'Disponible',
+        ]);
+
+        $cancha3 = Cancha::create([
+            'nombre' => 'Cancha Sur',
+            'tipo'   => 'Arcilla',
+            'estado' => 'No Disponible',
+        ]);
+
+        // Tarifas para Cancha Central
+        Tarifa::create([
+            'cancha_id'   => $cancha1->id,
+            'precio_hora' => 15000.00,
+            'hora_inicio' => '07:00',
+            'hora_fin'    => '12:00',
+            'turno'       => 'Mañana',
+            'estado'      => 'Activa',
+        ]);
+
+        Tarifa::create([
+            'cancha_id'   => $cancha1->id,
+            'precio_hora' => 18000.00,
+            'hora_inicio' => '12:00',
+            'hora_fin'    => '18:00',
+            'turno'       => 'Tarde',
+            'estado'      => 'Activa',
+        ]);
+
+        Tarifa::create([
+            'cancha_id'   => $cancha1->id,
+            'precio_hora' => 20000.00,
+            'hora_inicio' => '18:00',
+            'hora_fin'    => '22:00',
+            'turno'       => 'Noche',
+            'estado'      => 'Activa',
+        ]);
+
+        // Tarifas para Cancha Norte
+        Tarifa::create([
+            'cancha_id'   => $cancha2->id,
+            'precio_hora' => 12000.00,
+            'hora_inicio' => '07:00',
+            'hora_fin'    => '12:00',
+            'turno'       => 'Mañana',
+            'estado'      => 'Activa',
+        ]);
+
+        Tarifa::create([
+            'cancha_id'   => $cancha2->id,
+            'precio_hora' => 14000.00,
+            'hora_inicio' => '12:00',
+            'hora_fin'    => '22:00',
+            'turno'       => 'Tarde',
+            'estado'      => 'Inactiva',
         ]);
     }
 }
