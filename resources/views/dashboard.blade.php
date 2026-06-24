@@ -138,28 +138,18 @@
             </div>
 
             {{-- Tab: Inicio --}}
-            <div x-show="tab === 'inicio'" class="space-y-6 mt-6">
+            <div x-show="tab === 'inicio'" class="space-y-6 mt-6 w-full">
                 @include('dashboard._cliente_inicio')
             </div>
 
             {{-- Tab: Reservar --}}
-            <div x-show="tab === 'reservar'" class="mt-6">
+            <div x-show="tab === 'reservar'" class="mt-6 w-full">
                 @include('dashboard._reservar')
             </div>
 
             {{-- Tab: Mis Reservas --}}
-            <div x-show="tab === 'mis-reservas'" class="mt-6">
-                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                    <div class="flex items-center justify-between mb-4">
-                        <h2 class="text-lg font-bold text-gray-900">Mis Reservas</h2>
-                        <a href="{{ route('horarios.index') }}" class="text-sm text-green-600 font-semibold hover:underline">Ver todas</a>
-                    </div>
-                    <p class="text-gray-400 text-sm">Gestiona y consulta el historial de todas tus reservas.</p>
-                    <a href="{{ route('horarios.index') }}"
-                       class="mt-4 inline-flex items-center gap-2 border border-green-600 text-green-700 hover:bg-green-50 font-semibold px-4 py-2 rounded-xl text-sm transition-colors">
-                        Ver mis reservas
-                    </a>
-                </div>
+            <div x-show="tab === 'mis-reservas'" class="mt-6 w-full">
+                @include('dashboard._mis_reservas')
             </div>
         </div>
 
