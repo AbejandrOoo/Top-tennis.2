@@ -47,7 +47,7 @@ class HorarioController extends Controller
 
         if ($tarifas->isEmpty()) {
             return view('horarios.create', compact('canchas', 'tarifas'))
-                ->with('warning', 'No hay tarifas activas configuradas. Contactá a recepción.');
+                ->with('warning', 'No hay tarifas activas configuradas. Contacta a recepción.');
         }
 
         return view('horarios.create', compact('canchas', 'tarifas'));

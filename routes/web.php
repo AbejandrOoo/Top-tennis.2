@@ -27,7 +27,7 @@ Route::get('/dashboard', function () {
         $ingresosTotal     = \App\Models\Horario::whereIn('estado',['Confirmado','Completado'])->with('tarifa')->get()->sum(fn($h) => $h->tarifa?->precio_hora ?? 0);
         $reservasTotales   = \App\Models\Horario::count();
         $reservasHoy       = \App\Models\Horario::where('fecha',$hoy)->count();
-        $todasReservas     = \App\Models\Horario::with(['cancha','tarifa','user'])->orderByDesc('fecha')->orderByDesc('hora_inicio')->paginate(10);
+        $todasReservas     = \App\Models\Horario::with(['cancha','tarifa','user'])->orderByDesc('fecha')->orderByDesc('hora_inicio')->get();
         $horariosActivos   = \App\Models\Horario::selectRaw('hora_inicio, count(*) as total')->groupBy('hora_inicio')->orderByDesc('total')->limit(6)->get();
         return view('dashboard', compact('canchasLibres','reservasActivas','horariosDisp','canchas','misReservas','openTab','ingresosHoy','ingresosTotal','reservasTotales','reservasHoy','todasReservas','horariosActivos','isAdmin'));
     }

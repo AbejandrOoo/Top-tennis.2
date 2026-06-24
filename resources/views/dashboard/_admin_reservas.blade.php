@@ -1,5 +1,5 @@
 @php
-    $total       = $todasReservas->total();
+    $total       = $todasReservas->count();
     $confirmadas = \App\Models\Horario::where('estado','Confirmado')->count();
     $canceladas  = \App\Models\Horario::where('estado','Cancelado')->count();
     $reembolso   = \App\Models\Horario::where('estado','Cancelado')->whereNotNull('notas')->count(); // placeholder
@@ -112,7 +112,7 @@
 
     {{-- Tabla / lista --}}
     <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-        @if($todasReservas->isEmpty())
+        @if($todasReservas->isEmpty() || $todasReservas->count() === 0)
             <div class="flex flex-col items-center justify-center py-20 text-center">
                 <svg width="48" height="48" viewBox="0 0 24 24" fill="none" class="text-gray-200 mb-4">
                     <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" stroke-width="1.5"/>
@@ -181,12 +181,10 @@
                 </table>
             </div>
 
-            {{-- Paginación --}}
-            @if($todasReservas->hasPages())
-                <div class="px-5 py-4 border-t border-gray-100">
-                    {{ $todasReservas->links() }}
-                </div>
-            @endif
+            {{-- Contador resultados visibles --}}
+            <div class="px-5 py-3 border-t border-gray-50 text-xs text-gray-400">
+                {{ $todasReservas->count() }} reserva(s) en total
+            </div>
         @endif
     </div>
 </div>

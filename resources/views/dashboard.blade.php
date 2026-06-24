@@ -114,7 +114,7 @@
 
     @if($isAdmin)
     {{-- ===== TABS ADMIN ===== --}}
-    <div x-data="{ tab: '{{ $openTab === 'inicio' ? 'dashboard' : $openTab }}' }">
+    <div x-data="{ tab: '{{ in_array($openTab, ['dashboard','reservas','canchas','ipd']) ? $openTab : 'dashboard' }}' }">
 
         <div class="flex items-center gap-1 bg-white rounded-2xl p-1.5 shadow-sm border border-gray-100 w-fit">
             <button @click="tab = 'dashboard'" :class="tab === 'dashboard' ? 'tab-active' : 'tab-inactive'"
@@ -155,7 +155,7 @@
 
     @else
     {{-- ===== TABS CLIENTE ===== --}}
-    <div x-data="{ tab: '{{ $openTab }}' }">
+    <div x-data="{ tab: '{{ in_array($openTab, ['inicio','reservar','mis-reservas']) ? $openTab : 'inicio' }}' }">
 
         <div class="flex items-center gap-1 bg-white rounded-2xl p-1.5 shadow-sm border border-gray-100 w-fit">
             <button @click="tab = 'inicio'" :class="tab === 'inicio' ? 'tab-active' : 'tab-inactive'"

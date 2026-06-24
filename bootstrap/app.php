@@ -28,12 +28,12 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->render(function (ModelNotFoundException $e, Request $request) {
             $modelo = class_basename($e->getModel());
             $mensajes = [
-                'Cancha'  => 'La cancha que buscás no existe o fue eliminada.',
-                'Tarifa'  => 'La tarifa que buscás no existe o fue eliminada.',
-                'Horario' => 'El horario que buscás no existe o fue eliminado.',
-                'User'    => 'El usuario que buscás no existe.',
+                'Cancha'  => 'La cancha que buscas no existe o fue eliminada.',
+                'Tarifa'  => 'La tarifa que buscas no existe o fue eliminada.',
+                'Horario' => 'El horario que buscas no existe o fue eliminado.',
+                'User'    => 'El usuario que buscas no existe.',
             ];
-            $mensaje = $mensajes[$modelo] ?? 'El recurso que buscás no existe o fue eliminado.';
+            $mensaje = $mensajes[$modelo] ?? 'El recurso que buscas no existe o fue eliminado.';
 
             return response()->view('errors.404', compact('mensaje'), 404);
         });
@@ -41,7 +41,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // Ruta no encontrada → 404 personalizado
         $exceptions->render(function (NotFoundHttpException $e, Request $request) {
             return response()->view('errors.404', [
-                'mensaje' => 'La página que buscás no existe. Verificá la URL e intentá de nuevo.',
+                'mensaje' => 'La página que buscas no existe. Verifica la URL e intenta de nuevo.',
             ], 404);
         });
 
@@ -68,7 +68,7 @@ return Application::configure(basePath: dirname(__DIR__))
             // Si la solicitud es de un formulario, redirigir con mensaje amigable
             if ($request->method() !== 'GET') {
                 return back()->withInput()
-                    ->with('error', 'Ocurrió un error al procesar la operación en la base de datos. Intentá de nuevo.');
+                    ->with('error', 'Ocurrió un error al procesar la operación en la base de datos. Intenta de nuevo.');
             }
 
             return response()->view('errors.500', [

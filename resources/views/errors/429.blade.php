@@ -9,7 +9,7 @@
     <p class="mensaje">
         Realizaste demasiadas solicitudes en poco tiempo.
         Por seguridad, el sistema limitó temporalmente tu acceso.
-        Esperá unos minutos e intentá de nuevo.
+        Espera unos minutos e intenta de nuevo.
     </p>
     <a href="{{ url('/') }}" class="btn">Ir al Inicio</a>
 @endslot

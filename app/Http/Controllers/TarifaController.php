@@ -26,7 +26,7 @@ class TarifaController extends Controller
 
         if ($canchas->isEmpty()) {
             return view('tarifas.create', compact('canchas'))
-                ->with('warning', 'No hay canchas disponibles. Creá una cancha antes de agregar tarifas.');
+                ->with('warning', 'No hay canchas disponibles. Crea una cancha antes de agregar tarifas.');
         }
 
         return view('tarifas.create', compact('canchas'));
@@ -39,7 +39,7 @@ class TarifaController extends Controller
             $cancha = Cancha::find($request->cancha_id);
             if (!$cancha || $cancha->estado !== 'Disponible') {
                 return back()->withInput()
-                    ->with('error', 'La cancha seleccionada no está disponible. Actualizá la página e intentá de nuevo.');
+                    ->with('error', 'La cancha seleccionada no está disponible. Actualiza la página e intenta de nuevo.');
             }
 
             Tarifa::create($request->validated());
@@ -51,13 +51,13 @@ class TarifaController extends Controller
             Log::error('Error al crear tarifa', ['error' => $e->getMessage()]);
 
             return back()->withInput()
-                ->with('error', 'No se pudo guardar la tarifa. Verificá los datos e intentá de nuevo.');
+                ->with('error', 'No se pudo guardar la tarifa. Verifica los datos e intenta de nuevo.');
 
         } catch (\Exception $e) {
             Log::error('Error inesperado al crear tarifa', ['error' => $e->getMessage()]);
 
             return back()->withInput()
-                ->with('error', 'Ocurrió un error inesperado. Contactá al administrador.');
+                ->with('error', 'Ocurrió un error inesperado. Contacta al administrador.');
         }
     }
 

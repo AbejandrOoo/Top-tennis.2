@@ -18,6 +18,7 @@ class Horario extends Model
         'hora_fin',
         'estado',
         'notas',
+        'metodo_pago',
     ];
 
     protected $casts = [
