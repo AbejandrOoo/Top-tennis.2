@@ -1,6 +1,7 @@
 @echo off
 setlocal
 cd /d "%~dp0"
+cls
 
 echo Verificando requerimientos...
 
@@ -45,6 +46,11 @@ if not exist .env (
     if %errorlevel% neq 0 (
         echo Error: Fallo la generacion de la clave de la aplicacion (php artisan key:generate).
         echo.
+        echo Posible causa:
+        echo  - Revisa si hay errores de sintaxis en tu archivo .env.
+        echo  - Asegurate de que la configuracion de la base de datos en .env es correcta.
+        echo.
+        php artisan key:generate
         pause
         exit /b 1
     )
@@ -55,9 +61,12 @@ echo Todos los requerimientos estan correctos.
 echo Iniciando el servidor de desarrollo de Laravel...
 
 :: Inicia el servidor de Laravel en una nueva ventana de terminal.
-start "Laravel Dev Server" php artisan serve
+:: Se añade un 'cmd /k' para que la ventana no se cierre si hay un error.
+start "Laravel Dev Server" cmd /k "php artisan serve || pause"
 
 :: Espera 5 segundos para dar tiempo a que el servidor se inicie correctamente.
+echo.
+echo Esperando a que el servidor se inicie...
 timeout /t 5 /nobreak > nul
 
 :: Abre la URL de la aplicación en el navegador predeterminado.
@@ -65,4 +74,6 @@ start http://127.0.0.1:8000
 
 endlocal
 echo.
+echo Script finalizado. La ventana del servidor de Laravel debe permanecer abierta.
+echo Si se cerro, revisa esa ventana en busca de mensajes de error.
 pause
