@@ -112,50 +112,79 @@
 
 <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
 
-    {{-- ===== TABS (solo Cliente) ===== --}}
-    @if(Auth::user()->rol === \App\Enums\Rol::Cliente)
-        <div x-data="{ tab: '{{ $openTab }}' }">
+    @if($isAdmin)
+    {{-- ===== TABS ADMIN ===== --}}
+    <div x-data="{ tab: '{{ $openTab === 'inicio' ? 'dashboard' : $openTab }}' }">
 
-            <div class="flex items-center gap-1 bg-white rounded-2xl p-1.5 shadow-sm border border-gray-100 w-fit">
-                <button @click="tab = 'inicio'"
-                        :class="tab === 'inicio' ? 'tab-active' : 'tab-inactive'"
-                        class="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
-                    Inicio
-                </button>
-                <button @click="tab = 'reservar'"
-                        :class="tab === 'reservar' ? 'tab-active' : 'tab-inactive'"
-                        class="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2"/><path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-                    Reservar
-                </button>
-                <button @click="tab = 'mis-reservas'"
-                        :class="tab === 'mis-reservas' ? 'tab-active' : 'tab-inactive'"
-                        class="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M4 6h16M4 10h16M4 14h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-                    Mis Reservas
-                </button>
-            </div>
-
-            {{-- Tab: Inicio --}}
-            <div x-show="tab === 'inicio'" class="space-y-6 mt-6 w-full">
-                @include('dashboard._cliente_inicio')
-            </div>
-
-            {{-- Tab: Reservar --}}
-            <div x-show="tab === 'reservar'" class="mt-6 w-full">
-                @include('dashboard._reservar')
-            </div>
-
-            {{-- Tab: Mis Reservas --}}
-            <div x-show="tab === 'mis-reservas'" class="mt-6 w-full">
-                @include('dashboard._mis_reservas')
-            </div>
+        <div class="flex items-center gap-1 bg-white rounded-2xl p-1.5 shadow-sm border border-gray-100 w-fit">
+            <button @click="tab = 'dashboard'" :class="tab === 'dashboard' ? 'tab-active' : 'tab-inactive'"
+                    class="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="7" height="7" rx="1" stroke="currentColor" stroke-width="2"/><rect x="14" y="3" width="7" height="7" rx="1" stroke="currentColor" stroke-width="2"/><rect x="3" y="14" width="7" height="7" rx="1" stroke="currentColor" stroke-width="2"/><rect x="14" y="14" width="7" height="7" rx="1" stroke="currentColor" stroke-width="2"/></svg>
+                Dashboard
+            </button>
+            <button @click="tab = 'reservas'" :class="tab === 'reservas' ? 'tab-active' : 'tab-inactive'"
+                    class="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2"/><path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                Reservas
+            </button>
+            <button @click="tab = 'canchas'" :class="tab === 'canchas' ? 'tab-active' : 'tab-inactive'"
+                    class="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2"/><line x1="12" y1="3" x2="12" y2="21" stroke="currentColor" stroke-width="1.5"/><line x1="3" y1="9" x2="21" y2="9" stroke="currentColor" stroke-width="1.5"/><line x1="3" y1="15" x2="21" y2="15" stroke="currentColor" stroke-width="1.5"/></svg>
+                Canchas
+            </button>
+            <button @click="tab = 'ipd'" :class="tab === 'ipd' ? 'tab-active' : 'tab-inactive'"
+                    class="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+                Módulo IPD
+            </button>
         </div>
 
-    {{-- ===== PANEL ADMIN / RECEPCIONISTA ===== --}}
+        <div x-show="tab === 'dashboard'" class="mt-6 w-full">
+            @include('dashboard._admin_dashboard')
+        </div>
+        <div x-show="tab === 'reservas'" class="mt-6 w-full">
+            @include('dashboard._admin_reservas')
+        </div>
+        <div x-show="tab === 'canchas'" class="mt-6 w-full">
+            @include('dashboard._admin_canchas')
+        </div>
+        <div x-show="tab === 'ipd'" class="mt-6 w-full">
+            @include('dashboard._admin_ipd')
+        </div>
+    </div>
+
     @else
-        @include('dashboard._admin_inicio')
+    {{-- ===== TABS CLIENTE ===== --}}
+    <div x-data="{ tab: '{{ $openTab }}' }">
+
+        <div class="flex items-center gap-1 bg-white rounded-2xl p-1.5 shadow-sm border border-gray-100 w-fit">
+            <button @click="tab = 'inicio'" :class="tab === 'inicio' ? 'tab-active' : 'tab-inactive'"
+                    class="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+                Inicio
+            </button>
+            <button @click="tab = 'reservar'" :class="tab === 'reservar' ? 'tab-active' : 'tab-inactive'"
+                    class="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2"/><path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                Reservar
+            </button>
+            <button @click="tab = 'mis-reservas'" :class="tab === 'mis-reservas' ? 'tab-active' : 'tab-inactive'"
+                    class="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M4 6h16M4 10h16M4 14h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                Mis Reservas
+            </button>
+        </div>
+
+        <div x-show="tab === 'inicio'" class="space-y-6 mt-6 w-full">
+            @include('dashboard._cliente_inicio')
+        </div>
+        <div x-show="tab === 'reservar'" class="mt-6 w-full">
+            @include('dashboard._reservar')
+        </div>
+        <div x-show="tab === 'mis-reservas'" class="mt-6 w-full">
+            @include('dashboard._mis_reservas')
+        </div>
+    </div>
     @endif
 
 </div>

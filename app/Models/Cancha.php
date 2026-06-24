@@ -13,7 +13,9 @@ class Cancha extends Model
     protected $fillable = [
         'nombre',
         'tipo',
-        'estado'
+        'modalidad',
+        'capacidad',
+        'estado',
     ];
 
     public function tarifas()

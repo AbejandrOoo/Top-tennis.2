@@ -12,13 +12,28 @@ Route::get('/', function () {
 
 Route::get('/dashboard', function () {
     $user = auth()->user();
+    $isAdmin          = in_array($user->rol, [\App\Enums\Rol::Admin, \App\Enums\Rol::Recepcionista]);
     $canchasLibres    = \App\Models\Cancha::where('estado', 'Disponible')->count();
     $reservasActivas  = $user->horarios()->whereIn('estado', ['Reservado', 'Confirmado'])->count();
     $horariosDisp     = \App\Models\Tarifa::where('estado', 'Activa')->count();
     $canchas          = \App\Models\Cancha::with(['tarifas' => fn($q) => $q->where('estado','Activa')->orderBy('precio_hora')])->get();
     $misReservas      = $user->horarios()->with('cancha','tarifa')->orderByDesc('fecha')->orderByDesc('hora_inicio')->get();
-    $openTab          = session('open_tab', 'inicio');
-    return view('dashboard', compact('canchasLibres', 'reservasActivas', 'horariosDisp', 'canchas', 'misReservas', 'openTab'));
+    $defaultTab = $isAdmin ? 'dashboard' : 'inicio';
+    $openTab    = session('open_tab', $defaultTab);
+
+    if ($isAdmin) {
+        $hoy               = now()->toDateString();
+        $ingresosHoy       = \App\Models\Horario::whereIn('estado',['Confirmado','Completado'])->where('fecha',$hoy)->with('tarifa')->get()->sum(fn($h) => $h->tarifa?->precio_hora ?? 0);
+        $ingresosTotal     = \App\Models\Horario::whereIn('estado',['Confirmado','Completado'])->with('tarifa')->get()->sum(fn($h) => $h->tarifa?->precio_hora ?? 0);
+        $reservasTotales   = \App\Models\Horario::count();
+        $reservasHoy       = \App\Models\Horario::where('fecha',$hoy)->count();
+        $todasReservas     = \App\Models\Horario::with(['cancha','tarifa','user'])->orderByDesc('fecha')->orderByDesc('hora_inicio')->paginate(10);
+        $horariosActivos   = \App\Models\Horario::selectRaw('hora_inicio, count(*) as total')->groupBy('hora_inicio')->orderByDesc('total')->limit(6)->get();
+        return view('dashboard', compact('canchasLibres','reservasActivas','horariosDisp','canchas','misReservas','openTab','ingresosHoy','ingresosTotal','reservasTotales','reservasHoy','todasReservas','horariosActivos','isAdmin'));
+    }
+
+    $isAdmin = false;
+    return view('dashboard', compact('canchasLibres', 'reservasActivas', 'horariosDisp', 'canchas', 'misReservas', 'openTab', 'isAdmin'));
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
@@ -40,6 +55,12 @@ Route::middleware('auth')->group(function () {
         ->middleware('role:admin,recepcionista')->name('canchas.update');
     Route::delete('/canchas/{cancha}', [CanchaController::class, 'destroy'])
         ->middleware('role:admin')->name('canchas.destroy');
+    Route::patch('/canchas/{cancha}/toggle-estado', function (\App\Models\Cancha $cancha, \Illuminate\Http\Request $request) {
+        $cancha->update(['estado' => $request->estado]);
+        return redirect()->route('dashboard')
+            ->with('open_tab', 'canchas')
+            ->with('success', "Cancha {$cancha->nombre} actualizada.");
+    })->middleware('role:admin,recepcionista')->name('canchas.toggleEstado');
 });
 
 // Tarifas: todos los autenticados pueden ver, solo admin/recepcionista pueden modificar

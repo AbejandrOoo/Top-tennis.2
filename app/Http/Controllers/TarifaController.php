@@ -83,20 +83,19 @@ class TarifaController extends Controller
             ]);
 
             return back()->withInput()
-                ->with('error', 'No se pudo actualizar la tarifa. Intentá de nuevo.');
+                ->with('error', 'No se pudo actualizar la tarifa. Intenta de nuevo.');
 
         } catch (\Exception $e) {
             Log::error('Error inesperado al actualizar tarifa', ['error' => $e->getMessage()]);
 
             return back()->withInput()
-                ->with('error', 'Ocurrió un error inesperado. Contactá al administrador.');
+                ->with('error', 'Ocurrió un error inesperado. Contacta al administrador.');
         }
     }
 
     public function destroy(Tarifa $tarifa): RedirectResponse
     {
         try {
-            // Verificamos si tiene horarios activos antes de eliminar
             $horariosActivos = $tarifa->horarios()
                 ->whereNotIn('estado', ['Cancelado', 'Completado'])
                 ->count();
@@ -104,7 +103,7 @@ class TarifaController extends Controller
             if ($horariosActivos > 0) {
                 return back()->with(
                     'error',
-                    "No se puede eliminar esta tarifa porque tiene {$horariosActivos} horario(s) activo(s) asociado(s). Cancelalos primero."
+                    "No se puede eliminar esta tarifa porque tiene {$horariosActivos} reserva(s) activa(s) asociada(s). Cancélalas primero."
                 );
             }
 

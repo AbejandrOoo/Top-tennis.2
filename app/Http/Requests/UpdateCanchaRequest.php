@@ -13,25 +13,30 @@ class UpdateCanchaRequest extends FormRequest
 
     public function rules(): array
     {
-        // Ignoramos el nombre de la cancha actual al validar unique
         $canchaId = $this->route('cancha')->id;
 
         return [
-            'nombre' => ['required', 'string', 'max:100', "unique:canchas,nombre,{$canchaId}"],
-            'tipo'   => ['required', 'in:Arcilla,Sintética'],
-            'estado' => ['required', 'in:Disponible,No Disponible'],
+            'nombre'    => ['required', 'string', 'max:100', "unique:canchas,nombre,{$canchaId}"],
+            'tipo'      => ['required', 'in:Arcilla,Sintética,Hierba,Dura'],
+            'modalidad' => ['required', 'in:Singles,Dobles'],
+            'capacidad' => ['required', 'integer', 'min:1', 'max:8'],
+            'estado'    => ['required', 'in:Disponible,No Disponible,Bloqueada'],
         ];
     }
 
     public function messages(): array
     {
         return [
-            'nombre.required' => 'El nombre de la cancha es obligatorio.',
-            'nombre.unique'   => 'Ya existe una cancha con ese nombre.',
-            'tipo.required'   => 'El tipo de superficie es obligatorio.',
-            'tipo.in'         => 'El tipo debe ser Arcilla o Sintética.',
-            'estado.required' => 'El estado es obligatorio.',
-            'estado.in'       => 'El estado debe ser Disponible o No Disponible.',
+            'nombre.required'    => 'El nombre de la cancha es obligatorio.',
+            'nombre.unique'      => 'Ya existe una cancha con ese nombre.',
+            'tipo.required'      => 'El tipo de superficie es obligatorio.',
+            'tipo.in'            => 'El tipo debe ser Arcilla, Sintética, Hierba o Dura.',
+            'modalidad.required' => 'La modalidad es obligatoria.',
+            'modalidad.in'       => 'La modalidad debe ser Singles o Dobles.',
+            'capacidad.required' => 'La capacidad es obligatoria.',
+            'capacidad.integer'  => 'La capacidad debe ser un número entero.',
+            'estado.required'    => 'El estado es obligatorio.',
+            'estado.in'          => 'Estado inválido.',
         ];
     }
 }

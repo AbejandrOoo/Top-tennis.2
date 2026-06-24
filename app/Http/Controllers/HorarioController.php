@@ -78,7 +78,7 @@ class HorarioController extends Controller
 
             $destino = auth()->user()->rol === \App\Enums\Rol::Cliente
                 ? redirect()->route('dashboard')->with('open_tab', 'mis-reservas')
-                : redirect()->route('horarios.index');
+                : redirect()->route('dashboard')->with('open_tab', 'reservas');
 
             return $destino->with('success', "¡Reserva confirmada! {$request->fecha} · {$request->hora_inicio} – {$request->hora_fin}.");
 
@@ -96,7 +96,7 @@ class HorarioController extends Controller
             Log::error('Error inesperado al crear horario', ['error' => $e->getMessage()]);
 
             return back()->withInput()
-                ->with('error', 'Ocurrió un error inesperado. Contactá al administrador del club.');
+                ->with('error', 'Ocurrió un error inesperado. Contacta al administrador del club.');
         }
     }
 
@@ -111,7 +111,9 @@ class HorarioController extends Controller
 
         // Un horario completado o cancelado no se puede editar
         if (in_array($horario->estado, ['Completado', 'Cancelado'])) {
-            return redirect()->route('horarios.index')
+            $tab = auth()->user()->rol === \App\Enums\Rol::Cliente ? 'mis-reservas' : 'reservas';
+            return redirect()->route('dashboard')
+                ->with('open_tab', $tab)
                 ->with('warning', "El horario ya está {$horario->estado} y no puede modificarse.");
         }
 
@@ -127,7 +129,7 @@ class HorarioController extends Controller
             $this->authorize('update', $horario);
 
         } catch (AuthorizationException $e) {
-            return redirect()->route('horarios.index')
+            return redirect()->route('dashboard')
                 ->with('error', 'No tienes permisos para modificar este horario.');
         }
 
@@ -137,14 +139,22 @@ class HorarioController extends Controller
                 in_array($horario->estado, ['Cancelado', 'Completado'])
                 && !in_array(auth()->user()->rol, [\App\Enums\Rol::Admin, \App\Enums\Rol::Recepcionista])
             ) {
-                return redirect()->route('horarios.index')
+                return redirect()->route('dashboard')
                     ->with('error', "No se puede modificar un horario en estado {$horario->estado}.");
             }
 
             $horario->update($request->validated());
 
-            return redirect()->route('horarios.index')
-                ->with('success', 'Horario actualizado correctamente.');
+            $user = auth()->user();
+            if ($user->rol === \App\Enums\Rol::Cliente) {
+                return redirect()->route('dashboard')
+                    ->with('open_tab', 'mis-reservas')
+                    ->with('success', 'Reserva actualizada correctamente.');
+            }
+
+            return redirect()->route('dashboard')
+                ->with('open_tab', 'reservas')
+                ->with('success', 'Reserva actualizada correctamente.');
 
         } catch (QueryException $e) {
             Log::error('Error al actualizar horario', [
@@ -159,7 +169,7 @@ class HorarioController extends Controller
             Log::error('Error inesperado al actualizar horario', ['error' => $e->getMessage()]);
 
             return back()->withInput()
-                ->with('error', 'Ocurrió un error inesperado. Contactá al administrador.');
+                ->with('error', 'Ocurrió un error inesperado. Contacta al administrador.');
         }
     }
 
@@ -169,7 +179,7 @@ class HorarioController extends Controller
             $this->authorize('delete', $horario);
 
         } catch (AuthorizationException $e) {
-            return redirect()->route('horarios.index')
+            return redirect()->route('dashboard')
                 ->with('error', 'Solo los administradores pueden eliminar horarios.');
         }
 
@@ -178,14 +188,16 @@ class HorarioController extends Controller
             if ($horario->estado === 'Confirmado') {
                 return back()->with(
                     'warning',
-                    'El horario está Confirmado. Para eliminarlo, primero cambiá el estado a Cancelado.'
+                    'El horario está Confirmado. Para eliminarlo, primero cambia el estado a Cancelado.'
                 );
             }
 
             $horario->delete();
+            $tab = auth()->user()->rol === \App\Enums\Rol::Cliente ? 'mis-reservas' : 'reservas';
 
-            return redirect()->route('horarios.index')
-                ->with('success', 'Horario eliminado correctamente.');
+            return redirect()->route('dashboard')
+                ->with('open_tab', $tab)
+                ->with('success', 'Reserva eliminada correctamente.');
 
         } catch (QueryException $e) {
             Log::error('Error al eliminar horario', [
@@ -193,7 +205,7 @@ class HorarioController extends Controller
                 'error'      => $e->getMessage(),
             ]);
 
-            return back()->with('error', 'No se pudo eliminar el horario. Intentá de nuevo.');
+            return back()->with('error', 'No se pudo eliminar el horario. Intenta de nuevo.');
 
         } catch (\Exception $e) {
             Log::error('Error inesperado al eliminar horario', ['error' => $e->getMessage()]);
