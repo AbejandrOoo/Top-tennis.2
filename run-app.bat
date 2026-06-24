@@ -75,7 +75,7 @@ echo Iniciando el servidor de desarrollo de Laravel...
 
 :: Inicia el servidor de Laravel en una nueva ventana de terminal.
 :: Se añade un 'cmd /k' para que la ventana no se cierre si hay un error.
-start "Laravel Dev Server" cmd /k "php artisan serve || pause"
+start "Laravel Dev Server" cmd /k "p || pause"
 
 :: Espera 5 segundos para dar tiempo a que el servidor se inicie correctamente.
 echo.

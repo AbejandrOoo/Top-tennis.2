@@ -1,5 +1,7 @@
 @echo off
 setlocal
+cd /d "%~dp0"
+cls
 
 echo ==================================================
 echo ==      SCRIPT DE MIGRACION DE BASE DE DATOS    ==
@@ -44,14 +46,44 @@ echo  - Dependencias (vendor)......... OK
 if not exist .env (
     echo El archivo .env no existe. Copiando desde .env.example...
     copy .env.example .env >nul
+
+    echo.
+    echo Configurando drivers temporales a 'file' para evitar errores...
+    powershell -Command "(Get-Content .env) -replace 'SESSION_DRIVER=database', 'SESSION_DRIVER=file' | Set-Content .env"
+    powershell -Command "(Get-Content .env) -replace 'CACHE_STORE=database', 'CACHE_STORE=file' | Set-Content .env"
+    powershell -Command "(Get-Content .env) -replace 'QUEUE_CONNECTION=database', 'QUEUE_CONNECTION=sync' | Set-Content .env"
+
+    echo.
+    echo Creando archivo de base de datos SQLite para la primera ejecucion...
+    if not exist database\database.sqlite ( type nul > database\database.sqlite )
+    echo.
     echo Generando la clave de la aplicacion (APP_KEY)...
     php artisan key:generate
+    if %errorlevel% neq 0 (
+        echo Error: Fallo la generacion de la clave de la aplicacion (php artisan key:generate).
+        echo.
+        echo Posible causa: Revisa si hay errores de sintaxis en tu archivo .env.
+        echo.
+        php artisan key:generate
+        pause
+        exit /b 1
+    )
+
+    echo.
+    echo Restaurando configuracion original de drivers...
+    powershell -Command "(Get-Content .env) -replace 'SESSION_DRIVER=file', 'SESSION_DRIVER=database' | Set-Content .env"
+    powershell -Command "(Get-Content .env) -replace 'CACHE_STORE=file', 'CACHE_STORE=database' | Set-Content .env"
+    powershell -Command "(Get-Content .env) -replace 'QUEUE_CONNECTION=sync', 'QUEUE_CONNECTION=database' | Set-Content .env"
 )
 echo  - Archivo de entorno (.env)..... OK
 echo.
 
 echo Requerimientos verificados correctamente.
 echo.
+
+:: Pequeña pausa para leer los mensajes de verificación
+timeout /t 1 /nobreak > nul
+
 echo --------------------------------------------------
 echo Elige una opcion para la migracion:
 echo --------------------------------------------------
