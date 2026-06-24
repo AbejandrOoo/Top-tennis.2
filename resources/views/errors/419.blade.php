@@ -9,7 +9,7 @@
     <p class="mensaje">
         El formulario que intentaste enviar expiró por inactividad.
         Por seguridad, cada formulario tiene un tiempo límite.
-        Volvé atrás, recargá la página y envialo de nuevo.
+        Vuelve atrás, recarga la página e inténtalo de nuevo.
     </p>
     <a href="javascript:history.back()" class="btn">Volver al formulario</a>
     <a href="{{ url('/') }}" class="btn btn-outline">Ir al Inicio</a>

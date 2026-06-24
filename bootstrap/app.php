@@ -47,7 +47,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // Sin permiso (policy o abort(403)) → 403 personalizado
         $exceptions->render(function (AuthorizationException $e, Request $request) {
-            $mensaje = $e->getMessage() ?: 'No tenés permisos para realizar esta acción.';
+            $mensaje = $e->getMessage() ?: 'No tienes permisos para realizar esta acción.';
 
             return response()->view('errors.403', compact('mensaje'), 403);
         });

@@ -58,7 +58,7 @@ class DatabaseSeeder extends Seeder
         // Tarifas para Cancha Central
         Tarifa::create([
             'cancha_id'   => $cancha1->id,
-            'precio_hora' => 15000.00,
+            'precio_hora' => 15.00,
             'hora_inicio' => '07:00',
             'hora_fin'    => '12:00',
             'turno'       => 'Mañana',
@@ -67,7 +67,7 @@ class DatabaseSeeder extends Seeder
 
         Tarifa::create([
             'cancha_id'   => $cancha1->id,
-            'precio_hora' => 18000.00,
+            'precio_hora' => 18.00,
             'hora_inicio' => '12:00',
             'hora_fin'    => '18:00',
             'turno'       => 'Tarde',
@@ -76,7 +76,7 @@ class DatabaseSeeder extends Seeder
 
         Tarifa::create([
             'cancha_id'   => $cancha1->id,
-            'precio_hora' => 20000.00,
+            'precio_hora' => 20.00,
             'hora_inicio' => '18:00',
             'hora_fin'    => '22:00',
             'turno'       => 'Noche',
@@ -86,7 +86,7 @@ class DatabaseSeeder extends Seeder
         // Tarifas para Cancha Norte
         Tarifa::create([
             'cancha_id'   => $cancha2->id,
-            'precio_hora' => 12000.00,
+            'precio_hora' => 12.00,
             'hora_inicio' => '07:00',
             'hora_fin'    => '12:00',
             'turno'       => 'Mañana',
@@ -95,7 +95,7 @@ class DatabaseSeeder extends Seeder
 
         $tarifaNorteTarde = Tarifa::create([
             'cancha_id'   => $cancha2->id,
-            'precio_hora' => 14000.00,
+            'precio_hora' => 14.00,
             'hora_inicio' => '12:00',
             'hora_fin'    => '22:00',
             'turno'       => 'Tarde',

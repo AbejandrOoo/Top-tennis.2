@@ -1,97 +1,87 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            Nueva Tarifa
-        </h2>
+        <div>
+            <h1 class="text-2xl font-extrabold text-white">Nueva Tarifa</h1>
+            <p class="text-green-200 text-sm mt-0.5">
+                <a href="{{ route('tarifas.index') }}" class="hover:underline">Tarifas</a> / Nueva
+            </p>
+        </div>
     </x-slot>
 
-    <div class="py-12">
-        <div class="max-w-2xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white shadow-sm sm:rounded-lg p-6">
+    <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="card p-8">
+            <form method="POST" action="{{ route('tarifas.store') }}">
+                @csrf
 
-                <form method="POST" action="{{ route('tarifas.store') }}">
-                    @csrf
+                <div class="mb-5">
+                    <label for="cancha_id" class="form-label">Cancha</label>
+                    <select id="cancha_id" name="cancha_id"
+                            class="form-input {{ $errors->has('cancha_id') ? 'border-red-400' : '' }}">
+                        <option value="">Seleccione una cancha...</option>
+                        @foreach($canchas as $cancha)
+                            <option value="{{ $cancha->id }}" {{ old('cancha_id') == $cancha->id ? 'selected' : '' }}>
+                                {{ $cancha->nombre }} ({{ $cancha->tipo }})
+                            </option>
+                        @endforeach
+                    </select>
+                    @error('cancha_id')<p class="mt-1.5 text-xs text-red-500">{{ $message }}</p>@enderror
+                </div>
 
-                    <!-- Cancha -->
-                    <div class="mb-4">
-                        <x-input-label for="cancha_id" value="Cancha" />
-                        <select id="cancha_id" name="cancha_id"
-                                class="block mt-1 w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
-                            <option value="">Seleccione una cancha...</option>
-                            @foreach($canchas as $cancha)
-                                <option value="{{ $cancha->id }}"
-                                    {{ old('cancha_id') == $cancha->id ? 'selected' : '' }}>
-                                    {{ $cancha->nombre }} ({{ $cancha->tipo }})
-                                </option>
-                            @endforeach
-                        </select>
-                        <x-input-error :messages="$errors->get('cancha_id')" class="mt-2" />
+                <div class="mb-5">
+                    <label for="turno" class="form-label">Turno</label>
+                    <select id="turno" name="turno"
+                            class="form-input {{ $errors->has('turno') ? 'border-red-400' : '' }}">
+                        <option value="">Seleccione...</option>
+                        @foreach(['Mañana', 'Tarde', 'Noche'] as $turno)
+                            <option value="{{ $turno }}" {{ old('turno') === $turno ? 'selected' : '' }}>{{ $turno }}</option>
+                        @endforeach
+                    </select>
+                    @error('turno')<p class="mt-1.5 text-xs text-red-500">{{ $message }}</p>@enderror
+                </div>
+
+                <div class="grid grid-cols-2 gap-4 mb-5">
+                    <div>
+                        <label for="hora_inicio" class="form-label">Hora de inicio</label>
+                        <input id="hora_inicio" name="hora_inicio" type="time"
+                               class="form-input {{ $errors->has('hora_inicio') ? 'border-red-400' : '' }}"
+                               value="{{ old('hora_inicio') }}" required>
+                        @error('hora_inicio')<p class="mt-1.5 text-xs text-red-500">{{ $message }}</p>@enderror
                     </div>
-
-                    <!-- Turno -->
-                    <div class="mb-4">
-                        <x-input-label for="turno" value="Turno" />
-                        <select id="turno" name="turno"
-                                class="block mt-1 w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
-                            <option value="">Seleccione...</option>
-                            @foreach(['Mañana', 'Tarde', 'Noche'] as $turno)
-                                <option value="{{ $turno }}" {{ old('turno') === $turno ? 'selected' : '' }}>
-                                    {{ $turno }}
-                                </option>
-                            @endforeach
-                        </select>
-                        <x-input-error :messages="$errors->get('turno')" class="mt-2" />
+                    <div>
+                        <label for="hora_fin" class="form-label">Hora de fin</label>
+                        <input id="hora_fin" name="hora_fin" type="time"
+                               class="form-input {{ $errors->has('hora_fin') ? 'border-red-400' : '' }}"
+                               value="{{ old('hora_fin') }}" required>
+                        @error('hora_fin')<p class="mt-1.5 text-xs text-red-500">{{ $message }}</p>@enderror
                     </div>
+                </div>
 
-                    <!-- Horario -->
-                    <div class="grid grid-cols-2 gap-4 mb-4">
-                        <div>
-                            <x-input-label for="hora_inicio" value="Hora de inicio" />
-                            <x-text-input id="hora_inicio" name="hora_inicio" type="time"
-                                          class="block mt-1 w-full"
-                                          :value="old('hora_inicio')" required />
-                            <x-input-error :messages="$errors->get('hora_inicio')" class="mt-2" />
-                        </div>
-                        <div>
-                            <x-input-label for="hora_fin" value="Hora de fin" />
-                            <x-text-input id="hora_fin" name="hora_fin" type="time"
-                                          class="block mt-1 w-full"
-                                          :value="old('hora_fin')" required />
-                            <x-input-error :messages="$errors->get('hora_fin')" class="mt-2" />
-                        </div>
+                <div class="mb-5">
+                    <label for="precio_hora" class="form-label">Precio por hora (S/.)</label>
+                    <div class="relative">
+                        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-semibold text-sm">S/.</span>
+                        <input id="precio_hora" name="precio_hora" type="number"
+                               step="0.01" min="0"
+                               class="form-input pl-10 {{ $errors->has('precio_hora') ? 'border-red-400' : '' }}"
+                               value="{{ old('precio_hora') }}" placeholder="0.00" required>
                     </div>
+                    @error('precio_hora')<p class="mt-1.5 text-xs text-red-500">{{ $message }}</p>@enderror
+                </div>
 
-                    <!-- Precio -->
-                    <div class="mb-4">
-                        <x-input-label for="precio_hora" value="Precio por hora ($)" />
-                        <x-text-input id="precio_hora" name="precio_hora" type="number"
-                                      step="0.01" min="0"
-                                      class="block mt-1 w-full"
-                                      :value="old('precio_hora')" required />
-                        <x-input-error :messages="$errors->get('precio_hora')" class="mt-2" />
-                    </div>
+                <div class="mb-8">
+                    <label for="estado" class="form-label">Estado</label>
+                    <select id="estado" name="estado" class="form-input">
+                        <option value="Activa"   {{ old('estado', 'Activa') === 'Activa'   ? 'selected' : '' }}>Activa</option>
+                        <option value="Inactiva" {{ old('estado') === 'Inactiva' ? 'selected' : '' }}>Inactiva</option>
+                    </select>
+                    @error('estado')<p class="mt-1.5 text-xs text-red-500">{{ $message }}</p>@enderror
+                </div>
 
-                    <!-- Estado -->
-                    <div class="mb-6">
-                        <x-input-label for="estado" value="Estado" />
-                        <select id="estado" name="estado"
-                                class="block mt-1 w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
-                            <option value="Activa"   {{ old('estado', 'Activa') === 'Activa'   ? 'selected' : '' }}>Activa</option>
-                            <option value="Inactiva" {{ old('estado') === 'Inactiva' ? 'selected' : '' }}>Inactiva</option>
-                        </select>
-                        <x-input-error :messages="$errors->get('estado')" class="mt-2" />
-                    </div>
-
-                    <div class="flex justify-end gap-3">
-                        <a href="{{ route('tarifas.index') }}"
-                           class="px-4 py-2 text-sm text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50">
-                            Cancelar
-                        </a>
-                        <x-primary-button>Guardar Tarifa</x-primary-button>
-                    </div>
-                </form>
-
-            </div>
+                <div class="flex justify-end gap-3">
+                    <a href="{{ route('tarifas.index') }}" class="btn-outline-sm py-2 px-5">Cancelar</a>
+                    <button type="submit" class="btn-primary py-2 px-6">Guardar Tarifa</button>
+                </div>
+            </form>
         </div>
     </div>
 </x-app-layout>

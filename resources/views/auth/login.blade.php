@@ -207,9 +207,9 @@
 
                 @if (Route::has('register'))
                     <p class="text-center text-sm text-gray-500">
-                        ¿No tenés cuenta?
+                        ¿No tienes cuenta?
                         <a href="{{ route('register') }}" class="text-green-600 font-semibold hover:underline">
-                            Registrate gratis
+                            Regístrate gratis
                         </a>
                     </p>
                 @endif

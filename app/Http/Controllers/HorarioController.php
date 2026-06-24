@@ -103,7 +103,7 @@ class HorarioController extends Controller
             $this->authorize('update', $horario);
 
         } catch (AuthorizationException $e) {
-            abort(403, 'Solo podés editar tus propias reservas mientras estén en estado Reservado.');
+            abort(403, 'Solo puedes editar tus propias reservas mientras estén en estado Reservado.');
         }
 
         // Un horario completado o cancelado no se puede editar
@@ -125,7 +125,7 @@ class HorarioController extends Controller
 
         } catch (AuthorizationException $e) {
             return redirect()->route('horarios.index')
-                ->with('error', 'No tenés permisos para modificar este horario.');
+                ->with('error', 'No tienes permisos para modificar este horario.');
         }
 
         try {

@@ -245,7 +245,7 @@
                 </div>
 
                 <p class="text-center text-sm text-gray-500">
-                    ¿Ya tenés cuenta?
+                    ¿Ya tienes cuenta?
                     <a href="{{ route('login') }}" class="text-green-600 font-semibold hover:underline">
                         Iniciar sesión
                     </a>
