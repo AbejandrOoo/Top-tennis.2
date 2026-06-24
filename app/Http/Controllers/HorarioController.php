@@ -60,14 +60,14 @@ class HorarioController extends Controller
             $cancha = Cancha::find($request->cancha_id);
             if (!$cancha || $cancha->estado !== 'Disponible') {
                 return back()->withInput()
-                    ->with('error', 'La cancha seleccionada ya no está disponible. Elegí otra cancha.');
+                    ->with('error', 'La cancha seleccionada ya no está disponible. Elige otra cancha.');
             }
 
             // Verificación de negocio: la tarifa debe seguir activa
             $tarifa = Tarifa::find($request->tarifa_id);
             if (!$tarifa || $tarifa->estado !== 'Activa') {
                 return back()->withInput()
-                    ->with('error', 'La tarifa seleccionada ya no está activa. Elegí otra tarifa.');
+                    ->with('error', 'La tarifa seleccionada ya no está activa. Elige otra tarifa.');
             }
 
             Horario::create([
@@ -76,8 +76,11 @@ class HorarioController extends Controller
                 'estado'  => 'Reservado',
             ]);
 
-            return redirect()->route('horarios.index')
-                ->with('success', "Reserva creada correctamente para el {$request->fecha} de {$request->hora_inicio} a {$request->hora_fin}.");
+            $destino = auth()->user()->rol === \App\Enums\Rol::Cliente
+                ? redirect()->route('dashboard')->with('open_tab', 'mis-reservas')
+                : redirect()->route('horarios.index');
+
+            return $destino->with('success', "¡Reserva confirmada! {$request->fecha} · {$request->hora_inicio} – {$request->hora_fin}.");
 
         } catch (QueryException $e) {
             Log::error('Error al crear horario', [
@@ -87,7 +90,7 @@ class HorarioController extends Controller
             ]);
 
             return back()->withInput()
-                ->with('error', 'No se pudo guardar la reserva. Es posible que el horario ya fue tomado. Intentá de nuevo.');
+                ->with('error', 'No se pudo guardar la reserva. Es posible que el horario ya fue tomado. Inténtalo de nuevo.');
 
         } catch (\Exception $e) {
             Log::error('Error inesperado al crear horario', ['error' => $e->getMessage()]);

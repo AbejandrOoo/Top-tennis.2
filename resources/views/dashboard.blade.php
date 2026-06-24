@@ -114,7 +114,7 @@
 
     {{-- ===== TABS (solo Cliente) ===== --}}
     @if(Auth::user()->rol === \App\Enums\Rol::Cliente)
-        <div x-data="{ tab: 'inicio' }">
+        <div x-data="{ tab: '{{ $openTab }}' }">
 
             <div class="flex items-center gap-1 bg-white rounded-2xl p-1.5 shadow-sm border border-gray-100 w-fit">
                 <button @click="tab = 'inicio'"
