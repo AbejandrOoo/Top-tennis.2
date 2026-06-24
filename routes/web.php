@@ -16,7 +16,8 @@ Route::get('/dashboard', function () {
     $reservasActivas  = $user->horarios()->whereIn('estado', ['Reservado', 'Confirmado'])->count();
     $horariosDisp     = \App\Models\Tarifa::where('estado', 'Activa')->count();
     $canchas          = \App\Models\Cancha::with(['tarifas' => fn($q) => $q->where('estado','Activa')->orderBy('precio_hora')])->get();
-    return view('dashboard', compact('canchasLibres', 'reservasActivas', 'horariosDisp', 'canchas'));
+    $misReservas      = $user->horarios()->with('cancha','tarifa')->orderByDesc('fecha')->orderByDesc('hora_inicio')->get();
+    return view('dashboard', compact('canchasLibres', 'reservasActivas', 'horariosDisp', 'canchas', 'misReservas'));
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
