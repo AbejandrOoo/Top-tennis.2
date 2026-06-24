@@ -41,6 +41,15 @@ if not exist vendor (
 if not exist .env (
     echo El archivo .env no existe. Copiando desde .env.example...
     copy .env.example .env >nul
+    
+    echo.
+    echo Configurando temporalmente SESSION_DRIVER a 'file' para evitar errores...
+    powershell -Command "(Get-Content .env) -replace 'SESSION_DRIVER=database', 'SESSION_DRIVER=file' | Set-Content .env"
+
+    echo.
+    echo Creando archivo de base de datos SQLite para la primera ejecucion...
+    if not exist database\database.sqlite ( type nul > database\database.sqlite )
+    echo.
     echo Generando la clave de la aplicacion (APP_KEY)...
     php artisan key:generate
     if %errorlevel% neq 0 (
@@ -54,6 +63,10 @@ if not exist .env (
         pause
         exit /b 1
     )
+    echo.
+    echo Restaurando SESSION_DRIVER a 'database'...
+    powershell -Command "(Get-Content .env) -replace 'SESSION_DRIVER=file', 'SESSION_DRIVER=database' | Set-Content .env"
+
 )
 
 echo.
