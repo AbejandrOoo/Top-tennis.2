@@ -108,20 +108,36 @@
                 Elige tu Cancha
             </span>
         </div>
+        @php $canchasReservables = $canchas->where('estado','Disponible')->filter(fn($c) => $c->tarifas->isNotEmpty()); @endphp
+
+        @if($canchasReservables->isEmpty())
+            {{-- No hay canchas con tarifa configurada --}}
+            <div class="flex flex-col items-center justify-center py-10 text-center">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" class="text-gray-200 mb-3">
+                    <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2"/>
+                    <path d="M9 9l6 6M15 9l-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+                <p class="text-gray-400 text-sm font-medium">No hay canchas con tarifas disponibles en este momento.</p>
+                <p class="text-gray-300 text-xs mt-1">Contacta a recepción para más información.</p>
+            </div>
+        @else
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             @foreach($canchas->where('estado','Disponible') as $cancha)
                 @php
-                    $precioMin = $cancha->tarifas->min('precio_hora');
-                    $bg = $tipoBg($cancha->tipo);
-                    $label = $tipoLabel($cancha->tipo);
+                    $precioMin   = $cancha->tarifas->min('precio_hora');
+                    $bg          = $tipoBg($cancha->tipo);
+                    $label       = $tipoLabel($cancha->tipo);
+                    $sinTarifa   = $cancha->tarifas->isEmpty();
                 @endphp
                 <button type="button"
-                        :disabled="!horaSeleccionada"
+                        :disabled="!horaSeleccionada || {{ $sinTarifa ? 'true' : 'false' }}"
+                        @if(!$sinTarifa)
                         @click="setCancha({{ $cancha->id }}, '{{ addslashes($cancha->nombre) }}', '{{ $label }}', {{ $precioMin ?? 0 }})"
+                        @endif
                         :class="canchaId === {{ $cancha->id }}
                             ? 'ring-2 ring-green-500 ring-offset-2 opacity-100'
-                            : (!horaSeleccionada ? 'opacity-40 cursor-not-allowed' : 'hover:ring-2 hover:ring-green-200 hover:ring-offset-1 cursor-pointer')"
-                        class="bg-white rounded-2xl border border-gray-200 overflow-hidden text-left transition-all">
+                            : ({{ $sinTarifa ? 'true' : 'false' }} || !horaSeleccionada ? 'opacity-40 cursor-not-allowed' : 'hover:ring-2 hover:ring-green-200 hover:ring-offset-1 cursor-pointer')"
+                        class="bg-white rounded-2xl border border-gray-200 overflow-hidden text-left transition-all relative">
                     <div class="{{ $bg }} h-28 relative flex items-start p-3">
                         <span class="bg-black/30 text-white text-xs font-bold px-2 py-1 rounded-lg">{{ $label }}</span>
                         <svg class="absolute inset-0 w-full h-full opacity-20" viewBox="0 0 280 112" preserveAspectRatio="xMidYMid slice" fill="none">
@@ -131,17 +147,21 @@
                             <rect x="55" y="10" width="170" height="92" stroke="white" stroke-width="1"/>
                             <ellipse cx="140" cy="56" rx="20" ry="20" stroke="white" stroke-width="1.5"/>
                         </svg>
+                        @if(!$sinTarifa)
                         <div x-show="canchaId === {{ $cancha->id }}"
                              class="absolute top-3 right-3 w-7 h-7 bg-green-400 rounded-full flex items-center justify-center shadow">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
                         </div>
+                        @endif
                     </div>
                     <div class="px-4 py-3 flex items-center justify-between">
                         <div>
                             <p class="font-bold text-gray-900 text-sm">{{ $cancha->nombre }}</p>
                             <p class="text-gray-400 text-xs mt-0.5">{{ $label }} · {{ $cancha->tipo }}</p>
                         </div>
-                        @if($precioMin)
+                        @if($sinTarifa)
+                            <span class="text-xs font-semibold text-gray-400 bg-gray-100 px-2.5 py-1 rounded-full">Sin tarifa</span>
+                        @elseif($precioMin)
                             <div class="text-right">
                                 <p class="font-black text-gray-900 text-sm">S/ {{ number_format($precioMin, 0) }}</p>
                                 <p class="text-gray-400 text-xs">por hora</p>
@@ -151,11 +171,12 @@
                 </button>
             @endforeach
         </div>
+        @endif
 
-        {{-- Sin tarifa disponible para esa combinación --}}
+        {{-- Sin tarifa para esa combinación horaria --}}
         <p x-show="canchaId && !tarifaId"
            class="mt-3 text-xs text-orange-600 bg-orange-50 border border-orange-200 rounded-xl px-4 py-2">
-            ⚠ No hay una tarifa activa para esta cancha en ese horario. Prueba con otro horario.
+            ⚠ No hay una tarifa activa para esta cancha en ese horario. Prueba con otro horario u otra cancha.
         </p>
     </div>
 
@@ -176,7 +197,7 @@
             </div>
 
             <button type="button"
-                    @click="modalPago = true"
+                    @click="abrirPago()"
                     class="w-full flex items-center justify-center gap-2 font-bold py-3.5 rounded-2xl text-white text-sm transition-all"
                     style="background: linear-gradient(90deg, #4ade80, #22c55e); box-shadow: 0 4px 14px rgba(34,197,94,.4);">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
@@ -190,10 +211,11 @@
     </div>
 
     {{-- ===== MODAL PASARELA DE PAGO ===== --}}
-    <div x-show="modalPago"
+    <div x-show="modalPago" x-cloak
          x-transition:enter="transition ease-out duration-200"
          x-transition:enter-start="opacity-0"
          x-transition:enter-end="opacity-100"
+         @keydown.escape.window="modalPago = false"
          class="fixed inset-0 z-50 flex items-center justify-center p-4"
          style="background: rgba(0,0,0,.5); backdrop-filter: blur(4px);">
 
@@ -243,7 +265,7 @@
 
                     {{-- Yape --}}
                     <button type="button"
-                            @click="metodoPago = 'Yape'; $refs.formPago.submit()"
+                            @click="pagar('Yape')"
                             class="w-full flex items-center gap-4 p-4 rounded-2xl border-2 border-gray-100 hover:border-green-300 hover:bg-green-50 transition-all mb-3 text-left cursor-pointer group">
                         <div class="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0"
                              style="background: #6d28d9;">
@@ -263,7 +285,7 @@
 
                     {{-- Efectivo --}}
                     <button type="button"
-                            @click="metodoPago = 'Efectivo'; $refs.formPago.submit()"
+                            @click="pagar('Efectivo')"
                             class="w-full flex items-center gap-4 p-4 rounded-2xl border-2 border-gray-100 hover:border-green-300 hover:bg-green-50 transition-all text-left cursor-pointer group">
                         <div class="w-12 h-12 rounded-2xl bg-green-800 flex items-center justify-center shrink-0">
                             <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
@@ -362,22 +384,42 @@ function reservarWizard(todasTarifas) {
         },
 
         setCancha(id, nombre, label, precio) {
+            // Guarda: no continuar sin una hora seleccionada
+            if (!this.horaSeleccionada) return;
+
             this.canchaId     = id;
             this.canchaNombre = nombre;
             this.canchaLabel  = label;
-            this.canchaPrecio = precio;
+            this.canchaPrecio = Number(precio) || 0;
 
-            const [h, m] = this.horaSeleccionada.split(':').map(Number);
+            // Calcula hora_fin = hora_inicio + 1h
+            const parts = this.horaSeleccionada.split(':');
+            const h = parseInt(parts[0], 10);
+            const m = parseInt(parts[1] || '0', 10);
             const fin = new Date(2000, 0, 1, h + 1, m);
-            this.horaFin = fin.getHours().toString().padStart(2,'0') + ':' + fin.getMinutes().toString().padStart(2,'0');
+            this.horaFin = String(fin.getHours()).padStart(2,'0') + ':' + String(fin.getMinutes()).padStart(2,'0');
 
-            const tarifasCancha = todasTarifas.filter(t => t.cancha_id == id);
+            // Busca la tarifa activa que cubra la hora; si no, la primera de la cancha
+            const tarifasCancha = (todasTarifas || []).filter(t => Number(t.cancha_id) === Number(id));
             const match = tarifasCancha.find(t =>
                 this.horaSeleccionada >= t.hora_inicio && this.horaSeleccionada < t.hora_fin
             ) || tarifasCancha[0] || null;
 
             this.tarifaId     = match ? match.id : null;
-            this.canchaPrecio = match ? parseFloat(match.precio_hora) : precio;
+            this.canchaPrecio = match ? parseFloat(match.precio_hora) : (Number(precio) || 0);
+        },
+
+        abrirPago() {
+            // Guarda: solo abrir el modal si todo está completo
+            if (!this.listo) return;
+            this.modalPago = true;
+        },
+
+        pagar(metodo) {
+            // Guarda: evitar doble envío y datos incompletos
+            if (!this.listo || !metodo) return;
+            this.metodoPago = metodo;
+            this.$refs.formPago.submit();
         },
     };
 }

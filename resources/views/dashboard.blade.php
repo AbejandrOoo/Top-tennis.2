@@ -9,6 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Figtree', sans-serif; background: #f3f4f6; }
+        [x-cloak] { display: none !important; }
 
         .grid-pattern {
             background-image:

@@ -1,8 +1,8 @@
 @php
     $total       = $todasReservas->count();
-    $confirmadas = \App\Models\Horario::where('estado','Confirmado')->count();
-    $canceladas  = \App\Models\Horario::where('estado','Cancelado')->count();
-    $reembolso   = \App\Models\Horario::where('estado','Cancelado')->whereNotNull('notas')->count(); // placeholder
+    $confirmadas = $todasReservas->where('estado','Confirmado')->count();
+    $pendientes  = $todasReservas->where('estado','Reservado')->count();
+    $canceladas  = $todasReservas->where('estado','Cancelado')->count();
 
     $badgeColor = fn($estado) => match($estado) {
         'Confirmado' => 'bg-green-100 text-green-700',
@@ -41,13 +41,13 @@
             <p class="text-2xl font-black text-green-700">{{ $confirmadas }}</p>
             <p class="text-xs text-gray-400 mt-1">Confirmadas</p>
         </div>
+        <div class="rounded-2xl border border-yellow-100 shadow-sm p-4" style="background:#fefce8;">
+            <p class="text-2xl font-black text-yellow-600">{{ $pendientes }}</p>
+            <p class="text-xs text-gray-400 mt-1">Pendientes</p>
+        </div>
         <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
             <p class="text-2xl font-black text-gray-500">{{ $canceladas }}</p>
             <p class="text-xs text-gray-400 mt-1">Canceladas</p>
-        </div>
-        <div class="rounded-2xl border border-orange-100 shadow-sm p-4" style="background:#fff7ed;">
-            <p class="text-2xl font-black text-orange-500">{{ $reembolso }}</p>
-            <p class="text-xs text-gray-400 mt-1">Reembolso</p>
         </div>
     </div>
 
@@ -67,7 +67,7 @@
 
             {{-- Pills estado --}}
             <div class="flex items-center gap-1.5 flex-wrap">
-                @foreach(['todas'=>'Todas','Confirmado'=>'Confirmadas','Reservado'=>'Reembolso','Cancelado'=>'Canceladas'] as $val => $lbl)
+                @foreach(['todas'=>'Todas','Confirmado'=>'Confirmadas','Reservado'=>'Pendientes','Cancelado'=>'Canceladas'] as $val => $lbl)
                     <button type="button"
                             @click="filtroEstado = '{{ $val }}'"
                             :class="filtroEstado === '{{ $val }}'

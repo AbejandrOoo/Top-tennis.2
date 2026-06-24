@@ -31,7 +31,7 @@ class StoreHorarioRequest extends FormRequest
         $validator->after(function ($validator) {
             // La tarifa debe pertenecer a la cancha seleccionada
             $tarifa = Tarifa::find($this->tarifa_id);
-            if ($tarifa && $tarifa->cancha_id != $this->cancha_id) {
+            if ($tarifa && (int) $tarifa->cancha_id !== (int) $this->cancha_id) {
                 $validator->errors()->add('tarifa_id', 'La tarifa no corresponde a la cancha seleccionada.');
             }
 

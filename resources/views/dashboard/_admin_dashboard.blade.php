@@ -142,7 +142,7 @@
                 @foreach($horariosActivos as $slot)
                     @php $pct = $maxTotal > 0 ? ($slot->total / $maxTotal * 100) : 0; @endphp
                     <div class="flex items-center gap-3">
-                        <span class="text-xs font-mono text-gray-500 w-12 shrink-0">{{ substr($slot->hora_inicio,0,5) }}</span>
+                        <span class="text-xs font-mono text-gray-500 w-12 shrink-0">{{ substr($slot->hora_inicio ?? '00:00', 0, 5) }}</span>
                         <div class="flex-1 bg-gray-100 rounded-full h-2.5 overflow-hidden">
                             <div class="h-full rounded-full bg-gradient-to-r from-green-400 to-green-600 transition-all"
                                  style="width:{{ $pct }}%"></div>

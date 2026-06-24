@@ -56,7 +56,10 @@ Route::middleware('auth')->group(function () {
     Route::delete('/canchas/{cancha}', [CanchaController::class, 'destroy'])
         ->middleware('role:admin')->name('canchas.destroy');
     Route::patch('/canchas/{cancha}/toggle-estado', function (\App\Models\Cancha $cancha, \Illuminate\Http\Request $request) {
-        $cancha->update(['estado' => $request->estado]);
+        $validated = $request->validate([
+            'estado' => ['required', 'in:Disponible,No Disponible,Bloqueada'],
+        ]);
+        $cancha->update(['estado' => $validated['estado']]);
         return redirect()->route('dashboard')
             ->with('open_tab', 'canchas')
             ->with('success', "Cancha {$cancha->nombre} actualizada.");

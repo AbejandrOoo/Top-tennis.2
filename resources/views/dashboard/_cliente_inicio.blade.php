@@ -22,12 +22,12 @@
             {{ Auth::user()->name }}
         </h1>
         <p class="text-green-200 text-sm mb-6">Reserva tu cancha en segundos · Cancela cuando necesites</p>
-        <a href="{{ route('horarios.create') }}"
-           class="inline-flex items-center gap-2 bg-green-400 hover:bg-green-300 text-green-950 font-bold px-5 py-2.5 rounded-xl text-sm transition-colors">
+        <button type="button" @click="tab = 'reservar'"
+           class="inline-flex items-center gap-2 bg-green-400 hover:bg-green-300 text-green-950 font-bold px-5 py-2.5 rounded-xl text-sm transition-colors cursor-pointer">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2.2"/><path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
             Reservar Ahora
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </a>
+        </button>
     </div>
 
     {{-- Ícono persona / emoji --}}
@@ -133,10 +133,10 @@
                         @endif
                     </p>
                     @if($cancha->estado === 'Disponible')
-                        <a href="{{ route('horarios.create') }}"
-                           class="mt-3 block text-center bg-green-600 hover:bg-green-700 text-white text-xs font-semibold py-2 rounded-xl transition-colors">
+                        <button type="button" @click="tab = 'reservar'"
+                           class="mt-3 w-full block text-center bg-green-600 hover:bg-green-700 text-white text-xs font-semibold py-2 rounded-xl transition-colors cursor-pointer">
                             Reservar
-                        </a>
+                        </button>
                     @else
                         <div class="mt-3 text-center text-xs text-gray-400 py-2 rounded-xl border border-gray-100">
                             No disponible
