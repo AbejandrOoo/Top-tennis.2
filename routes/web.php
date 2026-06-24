@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\CanchaController;
+use App\Http\Controllers\HorarioController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\TarifaController;
 use Illuminate\Support\Facades\Route;
@@ -47,6 +48,17 @@ Route::middleware('auth')->group(function () {
         ->middleware('role:admin,recepcionista')->name('tarifas.update');
     Route::delete('/tarifas/{tarifa}', [TarifaController::class, 'destroy'])
         ->middleware('role:admin')->name('tarifas.destroy');
+});
+
+// Horarios: todos los autenticados pueden crear y ver los suyos; admin/recep ven todos
+Route::middleware('auth')->group(function () {
+    Route::get('/horarios', [HorarioController::class, 'index'])->name('horarios.index');
+    Route::get('/horarios/create', [HorarioController::class, 'create'])->name('horarios.create');
+    Route::post('/horarios', [HorarioController::class, 'store'])->name('horarios.store');
+    Route::get('/horarios/{horario}/edit', [HorarioController::class, 'edit'])->name('horarios.edit');
+    Route::patch('/horarios/{horario}', [HorarioController::class, 'update'])->name('horarios.update');
+    Route::delete('/horarios/{horario}', [HorarioController::class, 'destroy'])
+        ->middleware('role:admin')->name('horarios.destroy');
 });
 
 require __DIR__.'/auth.php';

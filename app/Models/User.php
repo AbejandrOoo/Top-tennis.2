@@ -25,6 +25,11 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
-        'rol' => \App\Enums\Rol::class, // Conexión estricta con nuestro Enum
+        'rol' => \App\Enums\Rol::class,
     ];
+
+    public function horarios()
+    {
+        return $this->hasMany(Horario::class);
+    }
 }

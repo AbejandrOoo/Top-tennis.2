@@ -23,4 +23,9 @@ class Tarifa extends Model
     {
         return $this->belongsTo(Cancha::class);
     }
+
+    public function horarios()
+    {
+        return $this->hasMany(Horario::class);
+    }
 }

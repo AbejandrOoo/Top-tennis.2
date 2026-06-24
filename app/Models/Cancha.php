@@ -20,4 +20,9 @@ class Cancha extends Model
     {
         return $this->hasMany(Tarifa::class);
     }
+
+    public function horarios()
+    {
+        return $this->hasMany(Horario::class);
+    }
 }

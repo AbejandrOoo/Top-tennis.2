@@ -21,6 +21,9 @@
                     <x-nav-link :href="route('tarifas.index')" :active="request()->routeIs('tarifas.*')">
                         Tarifas
                     </x-nav-link>
+                    <x-nav-link :href="route('horarios.index')" :active="request()->routeIs('horarios.*')">
+                        Horarios
+                    </x-nav-link>
                 </div>
             </div>
 
@@ -81,6 +84,9 @@
             </x-responsive-nav-link>
             <x-responsive-nav-link :href="route('tarifas.index')" :active="request()->routeIs('tarifas.*')">
                 Tarifas
+            </x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('horarios.index')" :active="request()->routeIs('horarios.*')">
+                Horarios
             </x-responsive-nav-link>
         </div>
 

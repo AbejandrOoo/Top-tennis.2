@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Enums\Rol;
 use App\Models\Cancha;
+use App\Models\Horario;
 use App\Models\Tarifa;
 use App\Models\User;
 use Illuminate\Database\Seeder;
@@ -92,13 +93,64 @@ class DatabaseSeeder extends Seeder
             'estado'      => 'Activa',
         ]);
 
-        Tarifa::create([
+        $tarifaNorteTarde = Tarifa::create([
             'cancha_id'   => $cancha2->id,
             'precio_hora' => 14000.00,
             'hora_inicio' => '12:00',
             'hora_fin'    => '22:00',
             'turno'       => 'Tarde',
             'estado'      => 'Inactiva',
+        ]);
+
+        // Usuarios ya creados arriba
+        $admin        = User::where('email', 'admin@toptennis.com')->first();
+        $cliente      = User::where('email', 'cliente@toptennis.com')->first();
+        $tarifaMañana = Tarifa::where('cancha_id', $cancha1->id)->where('turno', 'Mañana')->first();
+        $tarifaTarde  = Tarifa::where('cancha_id', $cancha1->id)->where('turno', 'Tarde')->first();
+        $tarifaNoche  = Tarifa::where('cancha_id', $cancha1->id)->where('turno', 'Noche')->first();
+        $tarifaNorteM = Tarifa::where('cancha_id', $cancha2->id)->where('turno', 'Mañana')->first();
+
+        // Horarios de ejemplo
+        Horario::create([
+            'cancha_id'   => $cancha1->id,
+            'tarifa_id'   => $tarifaMañana->id,
+            'user_id'     => $cliente->id,
+            'fecha'       => now()->addDays(1)->toDateString(),
+            'hora_inicio' => '08:00',
+            'hora_fin'    => '10:00',
+            'estado'      => 'Confirmado',
+            'notas'       => 'Partido de práctica',
+        ]);
+
+        Horario::create([
+            'cancha_id'   => $cancha1->id,
+            'tarifa_id'   => $tarifaTarde->id,
+            'user_id'     => $admin->id,
+            'fecha'       => now()->addDays(2)->toDateString(),
+            'hora_inicio' => '14:00',
+            'hora_fin'    => '16:00',
+            'estado'      => 'Reservado',
+        ]);
+
+        Horario::create([
+            'cancha_id'   => $cancha2->id,
+            'tarifa_id'   => $tarifaNorteM->id,
+            'user_id'     => $cliente->id,
+            'fecha'       => now()->addDays(3)->toDateString(),
+            'hora_inicio' => '09:00',
+            'hora_fin'    => '11:00',
+            'estado'      => 'Reservado',
+            'notas'       => 'Clase particular',
+        ]);
+
+        Horario::create([
+            'cancha_id'   => $cancha1->id,
+            'tarifa_id'   => $tarifaNoche->id,
+            'user_id'     => $cliente->id,
+            'fecha'       => now()->subDays(2)->toDateString(),
+            'hora_inicio' => '19:00',
+            'hora_fin'    => '21:00',
+            'estado'      => 'Completado',
         ]);
     }
 }
