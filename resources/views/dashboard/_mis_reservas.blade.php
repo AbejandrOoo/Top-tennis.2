@@ -85,15 +85,25 @@
 
                     {{-- Acciones --}}
                     <div class="flex items-center gap-2 shrink-0">
+                        @if($reserva->estado === 'Reservado')
+                            <a href="{{ route('pagos.confirmar', $reserva) }}"
+                               class="text-xs bg-green-500 hover:bg-green-400 text-white px-3 py-1.5 rounded-xl transition-colors font-bold">
+                                Pagar
+                            </a>
+                        @endif
+                        @php $pagoReserva = $reserva->pagos->first(); @endphp
+                        @if($reserva->estado === 'Confirmado' && $pagoReserva)
+                            <a href="{{ route('pagos.ticket', $pagoReserva) }}"
+                               class="text-xs border border-green-300 hover:border-green-500 text-green-700 px-3 py-1.5 rounded-xl transition-colors font-semibold">
+                                Ver ticket
+                            </a>
+                        @endif
                         @if(in_array($reserva->estado, ['Reservado', 'Confirmado']))
                             <a href="{{ route('horarios.edit', $reserva) }}"
                                class="text-xs border border-gray-200 hover:border-green-400 text-gray-500 hover:text-green-700 px-3 py-1.5 rounded-xl transition-colors font-semibold">
                                 Editar
                             </a>
                         @endif
-                        <div class="text-right">
-                            <p class="text-xs text-gray-300">{{ $reserva->fecha instanceof \Carbon\Carbon ? $reserva->fecha->diffForHumans() : '' }}</p>
-                        </div>
                     </div>
                 </div>
             @endforeach

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\CanchaController;
 use App\Http\Controllers\HorarioController;
+use App\Http\Controllers\PagoController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\TarifaController;
 use Illuminate\Support\Facades\Route;
@@ -17,7 +18,7 @@ Route::get('/dashboard', function () {
     $reservasActivas  = $user->horarios()->whereIn('estado', ['Reservado', 'Confirmado'])->count();
     $horariosDisp     = \App\Models\Tarifa::where('estado', 'Activa')->count();
     $canchas          = \App\Models\Cancha::with(['tarifas' => fn($q) => $q->where('estado','Activa')->orderBy('precio_hora')])->get();
-    $misReservas      = $user->horarios()->with('cancha','tarifa')->orderByDesc('fecha')->orderByDesc('hora_inicio')->get();
+    $misReservas      = $user->horarios()->with('cancha','tarifa','pagos')->orderByDesc('fecha')->orderByDesc('hora_inicio')->get();
     $defaultTab = $isAdmin ? 'dashboard' : 'inicio';
     $openTab    = session('open_tab', $defaultTab);
 
@@ -90,6 +91,14 @@ Route::middleware('auth')->group(function () {
     Route::patch('/horarios/{horario}', [HorarioController::class, 'update'])->name('horarios.update');
     Route::delete('/horarios/{horario}', [HorarioController::class, 'destroy'])
         ->middleware('role:admin')->name('horarios.destroy');
+});
+
+// Pagos: confirmación de pago Yape/Plin o Efectivo + ticket digital descargable
+Route::middleware('auth')->group(function () {
+    Route::get('/pagos/{horario}/confirmar', [PagoController::class, 'confirmar'])->name('pagos.confirmar');
+    Route::post('/pagos', [PagoController::class, 'procesar'])->name('pagos.procesar');
+    Route::get('/pagos/{pago}/ticket', [PagoController::class, 'ticket'])->name('pagos.ticket');
+    Route::get('/pagos/{pago}/ticket/pdf', [PagoController::class, 'descargarTicket'])->name('pagos.ticket.pdf');
 });
 
 require __DIR__.'/auth.php';
