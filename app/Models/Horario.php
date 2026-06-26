@@ -39,4 +39,9 @@ class Horario extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    public function pagos()
+    {
+        return $this->hasMany(Pago::class);
+    }
 }
