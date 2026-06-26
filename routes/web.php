@@ -2,8 +2,8 @@
 
 use App\Http\Controllers\CanchaController;
 use App\Http\Controllers\HorarioController;
-use App\Http\Controllers\PagoController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ReservaController;
 use App\Http\Controllers\TarifaController;
 use Illuminate\Support\Facades\Route;
 
@@ -12,29 +12,30 @@ Route::get('/', function () {
 });
 
 Route::get('/dashboard', function () {
-    $user = auth()->user();
-    $isAdmin          = in_array($user->rol, [\App\Enums\Rol::Admin, \App\Enums\Rol::Recepcionista]);
-    $canchasLibres    = \App\Models\Cancha::where('estado', 'Disponible')->count();
-    $reservasActivas  = $user->horarios()->whereIn('estado', ['Reservado', 'Confirmado'])->count();
-    $horariosDisp     = \App\Models\Tarifa::where('estado', 'Activa')->count();
-    $canchas          = \App\Models\Cancha::with(['tarifas' => fn($q) => $q->where('estado','Activa')->orderBy('precio_hora')])->get();
-    $misReservas      = $user->horarios()->with('cancha','tarifa','pagos')->orderByDesc('fecha')->orderByDesc('hora_inicio')->get();
-    $defaultTab = $isAdmin ? 'dashboard' : 'inicio';
-    $openTab    = session('open_tab', $defaultTab);
+    $user    = auth()->user();
+    $esStaff = in_array($user->rol, [\App\Enums\Rol::Admin, \App\Enums\Rol::Recepcionista]);
 
-    if ($isAdmin) {
-        $hoy               = now()->toDateString();
-        $ingresosHoy       = \App\Models\Horario::whereIn('estado',['Confirmado','Completado'])->where('fecha',$hoy)->with('tarifa')->get()->sum(fn($h) => $h->tarifa?->precio_hora ?? 0);
-        $ingresosTotal     = \App\Models\Horario::whereIn('estado',['Confirmado','Completado'])->with('tarifa')->get()->sum(fn($h) => $h->tarifa?->precio_hora ?? 0);
-        $reservasTotales   = \App\Models\Horario::count();
-        $reservasHoy       = \App\Models\Horario::where('fecha',$hoy)->count();
-        $todasReservas     = \App\Models\Horario::with(['cancha','tarifa','user'])->orderByDesc('fecha')->orderByDesc('hora_inicio')->get();
-        $horariosActivos   = \App\Models\Horario::selectRaw('hora_inicio, count(*) as total')->groupBy('hora_inicio')->orderByDesc('total')->limit(6)->get();
-        return view('dashboard', compact('canchasLibres','reservasActivas','horariosDisp','canchas','misReservas','openTab','ingresosHoy','ingresosTotal','reservasTotales','reservasHoy','todasReservas','horariosActivos','isAdmin'));
+    if ($esStaff) {
+        $stats = [
+            'canchas'           => \App\Models\Cancha::count(),
+            'canchas_operativas'=> \App\Models\Cancha::where('estado_mantenimiento', 'operativa')->count(),
+            'tarifas'           => \App\Models\Tarifa::count(),
+            'horarios_disp'     => \App\Models\Horario::where('estado', 'disponible')->count(),
+            'reservas'          => \App\Models\Reserva::count(),
+            'ingresos'          => \App\Models\Reserva::where('estado_pago', 'aprobado')
+                ->with('horario.tarifa')->get()
+                ->sum(fn ($r) => (float) ($r->horario->tarifa->precio ?? 0)),
+        ];
+
+        return view('dashboard', compact('esStaff', 'stats'));
     }
 
-    $isAdmin = false;
-    return view('dashboard', compact('canchasLibres', 'reservasActivas', 'horariosDisp', 'canchas', 'misReservas', 'openTab', 'isAdmin'));
+    $stats = [
+        'disponibles' => \App\Models\Horario::reservables()->count(),
+        'mis_reservas'=> $user->reservas()->count(),
+    ];
+
+    return view('dashboard', compact('esStaff', 'stats'));
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
@@ -43,62 +44,45 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-// Canchas: todos los autenticados pueden ver, solo admin/recepcionista pueden modificar
-Route::middleware('auth')->group(function () {
-    Route::get('/canchas', [CanchaController::class, 'index'])->name('canchas.index');
-    Route::get('/canchas/create', [CanchaController::class, 'create'])
-        ->middleware('role:admin,recepcionista')->name('canchas.create');
-    Route::post('/canchas', [CanchaController::class, 'store'])
-        ->middleware('role:admin,recepcionista')->name('canchas.store');
-    Route::get('/canchas/{cancha}/edit', [CanchaController::class, 'edit'])
-        ->middleware('role:admin,recepcionista')->name('canchas.edit');
-    Route::patch('/canchas/{cancha}', [CanchaController::class, 'update'])
-        ->middleware('role:admin,recepcionista')->name('canchas.update');
-    Route::delete('/canchas/{cancha}', [CanchaController::class, 'destroy'])
-        ->middleware('role:admin')->name('canchas.destroy');
-    Route::patch('/canchas/{cancha}/toggle-estado', function (\App\Models\Cancha $cancha, \Illuminate\Http\Request $request) {
-        $validated = $request->validate([
-            'estado' => ['required', 'in:Disponible,No Disponible,Bloqueada'],
-        ]);
-        $cancha->update(['estado' => $validated['estado']]);
-        return redirect()->route('dashboard')
-            ->with('open_tab', 'canchas')
-            ->with('success', "Cancha {$cancha->nombre} actualizada.");
-    })->middleware('role:admin,recepcionista')->name('canchas.toggleEstado');
-});
+// ===== CRUDs exclusivos del Admin =====
+Route::middleware(['auth', 'role:admin'])->group(function () {
+    // Canchas
+    Route::get('/canchas',                 [CanchaController::class, 'index'])->name('canchas.index');
+    Route::get('/canchas/create',          [CanchaController::class, 'create'])->name('canchas.create');
+    Route::post('/canchas',                [CanchaController::class, 'store'])->name('canchas.store');
+    Route::get('/canchas/{cancha}/edit',   [CanchaController::class, 'edit'])->name('canchas.edit');
+    Route::patch('/canchas/{cancha}',      [CanchaController::class, 'update'])->name('canchas.update');
+    Route::delete('/canchas/{cancha}',     [CanchaController::class, 'destroy'])->name('canchas.destroy');
 
-// Tarifas: todos los autenticados pueden ver, solo admin/recepcionista pueden modificar
-Route::middleware('auth')->group(function () {
-    Route::get('/tarifas', [TarifaController::class, 'index'])->name('tarifas.index');
-    Route::get('/tarifas/create', [TarifaController::class, 'create'])
-        ->middleware('role:admin,recepcionista')->name('tarifas.create');
-    Route::post('/tarifas', [TarifaController::class, 'store'])
-        ->middleware('role:admin,recepcionista')->name('tarifas.store');
-    Route::get('/tarifas/{tarifa}/edit', [TarifaController::class, 'edit'])
-        ->middleware('role:admin,recepcionista')->name('tarifas.edit');
-    Route::patch('/tarifas/{tarifa}', [TarifaController::class, 'update'])
-        ->middleware('role:admin,recepcionista')->name('tarifas.update');
-    Route::delete('/tarifas/{tarifa}', [TarifaController::class, 'destroy'])
-        ->middleware('role:admin')->name('tarifas.destroy');
-});
+    // Tarifas
+    Route::get('/tarifas',                 [TarifaController::class, 'index'])->name('tarifas.index');
+    Route::get('/tarifas/create',          [TarifaController::class, 'create'])->name('tarifas.create');
+    Route::post('/tarifas',                [TarifaController::class, 'store'])->name('tarifas.store');
+    Route::get('/tarifas/{tarifa}/edit',   [TarifaController::class, 'edit'])->name('tarifas.edit');
+    Route::patch('/tarifas/{tarifa}',      [TarifaController::class, 'update'])->name('tarifas.update');
+    Route::delete('/tarifas/{tarifa}',     [TarifaController::class, 'destroy'])->name('tarifas.destroy');
 
-// Horarios: todos los autenticados pueden crear y ver los suyos; admin/recep ven todos
-Route::middleware('auth')->group(function () {
-    Route::get('/horarios', [HorarioController::class, 'index'])->name('horarios.index');
-    Route::get('/horarios/create', [HorarioController::class, 'create'])->name('horarios.create');
-    Route::post('/horarios', [HorarioController::class, 'store'])->name('horarios.store');
+    // Horarios (slots)
+    Route::get('/horarios',                [HorarioController::class, 'index'])->name('horarios.index');
+    Route::get('/horarios/create',         [HorarioController::class, 'create'])->name('horarios.create');
+    Route::post('/horarios',               [HorarioController::class, 'store'])->name('horarios.store');
     Route::get('/horarios/{horario}/edit', [HorarioController::class, 'edit'])->name('horarios.edit');
-    Route::patch('/horarios/{horario}', [HorarioController::class, 'update'])->name('horarios.update');
-    Route::delete('/horarios/{horario}', [HorarioController::class, 'destroy'])
-        ->middleware('role:admin')->name('horarios.destroy');
+    Route::patch('/horarios/{horario}',    [HorarioController::class, 'update'])->name('horarios.update');
+    Route::delete('/horarios/{horario}',   [HorarioController::class, 'destroy'])->name('horarios.destroy');
 });
 
-// Pagos: confirmación de pago Yape/Plin o Efectivo + ticket digital descargable
+// ===== Reservas (flujo cliente + ticket) =====
 Route::middleware('auth')->group(function () {
-    Route::get('/pagos/{horario}/confirmar', [PagoController::class, 'confirmar'])->name('pagos.confirmar');
-    Route::post('/pagos', [PagoController::class, 'procesar'])->name('pagos.procesar');
-    Route::get('/pagos/{pago}/ticket', [PagoController::class, 'ticket'])->name('pagos.ticket');
-    Route::get('/pagos/{pago}/ticket/pdf', [PagoController::class, 'descargarTicket'])->name('pagos.ticket.pdf');
+    Route::get('/reservar',                       [ReservaController::class, 'disponibles'])->name('reservas.disponibles');
+    Route::get('/reservas',                        [ReservaController::class, 'index'])->name('reservas.index');
+    Route::get('/reservar/{horario}/confirmar',    [ReservaController::class, 'confirmar'])->name('reservas.confirmar');
+    Route::post('/reservas',                       [ReservaController::class, 'store'])->name('reservas.store');
+    Route::get('/reservas/{reserva}/ticket',       [ReservaController::class, 'ticket'])->name('reservas.ticket');
+    Route::get('/reservas/{reserva}/ticket/pdf',   [ReservaController::class, 'descargarTicket'])->name('reservas.ticket.pdf');
+    Route::delete('/reservas/{reserva}',           [ReservaController::class, 'cancelar'])->name('reservas.cancelar');
+    // Recepción confirma un pago en efectivo
+    Route::patch('/reservas/{reserva}/confirmar-pago', [ReservaController::class, 'confirmarPago'])
+        ->middleware('role:admin,recepcionista')->name('reservas.confirmarPago');
 });
 
 require __DIR__.'/auth.php';

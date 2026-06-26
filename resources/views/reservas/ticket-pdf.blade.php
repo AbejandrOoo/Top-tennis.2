@@ -14,6 +14,10 @@
         .badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: bold; }
         .badge-green { background: #dcfce7; color: #15803d; }
         .badge-yellow { background: #fef9c3; color: #854d0e; }
+        .badge-red { background: #fee2e2; color: #991b1b; }
+        .aviso-rojo { margin: 10px 16px 0; padding: 8px 10px; border: 1px solid #fca5a5;
+                      background: #fef2f2; border-radius: 6px; }
+        .aviso-rojo p { font-size: 10px; color: #b91c1c; font-weight: bold; line-height: 1.3; }
         .codigo { text-align: center; padding: 14px; }
         .codigo .label { font-size: 9px; color: #9ca3af; letter-spacing: 2px; text-transform: uppercase; }
         .codigo .val { font-size: 26px; font-weight: bold; color: #15803d; letter-spacing: 2px; }
@@ -45,16 +49,24 @@
         </div>
 
         <div class="estado">
-            @if($pago->estado === 'Pagado')
+            @if($reserva->estado_pago === 'aprobado')
                 <span class="badge badge-green">PAGADO</span>
+            @elseif($reserva->estado_pago === 'anulada')
+                <span class="badge badge-red">ANULADA</span>
             @else
-                <span class="badge badge-yellow">PENDIENTE EN RECEPCION</span>
+                <span class="badge badge-yellow">PAGO PENDIENTE</span>
             @endif
         </div>
 
+        @if($reserva->estado_pago === 'pendiente' && $reserva->metodo_pago === 'Efectivo')
+            <div class="aviso-rojo">
+                <p>PAGO PENDIENTE: Tiene hasta 30 minutos antes de su hora de inicio ({{ optional($reserva->expira_at)->format('d/m/Y H:i') }}) para pagar presencialmente, de lo contrario su reserva sera anulada.</p>
+            </div>
+        @endif
+
         <div class="codigo">
             <div class="label">Codigo de validacion</div>
-            <div class="val">{{ $pago->codigo_validacion }}</div>
+            <div class="val">{{ $reserva->codigo_validacion }}</div>
         </div>
 
         <div class="qr">
@@ -64,15 +76,15 @@
         </div>
 
         <div class="datos">
-            <div class="row"><span class="k">Cliente</span><span class="v">{{ $pago->horario->user->name ?? '—' }}</span><div class="clear"></div></div>
-            <div class="row"><span class="k">Cancha</span><span class="v">{{ $pago->horario->cancha->nombre ?? '—' }}</span><div class="clear"></div></div>
-            <div class="row"><span class="k">Fecha</span><span class="v">{{ optional($pago->horario->fecha)->format('d/m/Y') }}</span><div class="clear"></div></div>
-            <div class="row"><span class="k">Horario</span><span class="v">{{ substr($pago->horario->hora_inicio, 0, 5) }} - {{ substr($pago->horario->hora_fin, 0, 5) }}</span><div class="clear"></div></div>
-            <div class="row"><span class="k">Metodo de pago</span><span class="v">{{ $pago->metodo_pago }}</span><div class="clear"></div></div>
-            @if($pago->numero_operacion)
-                <div class="row"><span class="k">N° operacion</span><span class="v">{{ $pago->numero_operacion }}</span><div class="clear"></div></div>
+            <div class="row"><span class="k">Cliente</span><span class="v">{{ $reserva->user->name ?? '—' }}</span><div class="clear"></div></div>
+            <div class="row"><span class="k">Cancha</span><span class="v">{{ $reserva->horario->cancha->nombre ?? '—' }}</span><div class="clear"></div></div>
+            <div class="row"><span class="k">Fecha</span><span class="v">{{ $reserva->horario->hora_inicio->format('d/m/Y') }}</span><div class="clear"></div></div>
+            <div class="row"><span class="k">Horario</span><span class="v">{{ $reserva->horario->hora_inicio->format('H:i') }} - {{ $reserva->horario->hora_fin->format('H:i') }}</span><div class="clear"></div></div>
+            <div class="row"><span class="k">Metodo de pago</span><span class="v">{{ $reserva->metodo_pago }}</span><div class="clear"></div></div>
+            @if($reserva->numero_operacion)
+                <div class="row"><span class="k">N° operacion</span><span class="v">{{ $reserva->numero_operacion }}</span><div class="clear"></div></div>
             @endif
-            <div class="row monto"><span class="k">Monto</span><span class="v">S/ {{ number_format((float) $pago->monto, 2) }}</span><div class="clear"></div></div>
+            <div class="row monto"><span class="k">Monto</span><span class="v">S/ {{ number_format($reserva->horario->tarifa->precio ?? 0, 2) }}</span><div class="clear"></div></div>
         </div>
 
         <div class="foot">

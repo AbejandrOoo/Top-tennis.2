@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreTarifaRequest;
 use App\Http\Requests\UpdateTarifaRequest;
-use App\Models\Cancha;
 use App\Models\Tarifa;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
@@ -15,33 +14,19 @@ class TarifaController extends Controller
 {
     public function index(): View
     {
-        $tarifas = Tarifa::with('cancha')->latest()->paginate(10);
+        $tarifas = Tarifa::withCount('horarios')->latest()->paginate(10);
 
         return view('tarifas.index', compact('tarifas'));
     }
 
     public function create(): View
     {
-        $canchas = Cancha::where('estado', 'Disponible')->get();
-
-        if ($canchas->isEmpty()) {
-            return view('tarifas.create', compact('canchas'))
-                ->with('warning', 'No hay canchas disponibles. Crea una cancha antes de agregar tarifas.');
-        }
-
-        return view('tarifas.create', compact('canchas'));
+        return view('tarifas.create');
     }
 
     public function store(StoreTarifaRequest $request): RedirectResponse
     {
         try {
-            // Verificación de negocio: la cancha debe seguir disponible al momento de guardar
-            $cancha = Cancha::find($request->cancha_id);
-            if (!$cancha || $cancha->estado !== 'Disponible') {
-                return back()->withInput()
-                    ->with('error', 'La cancha seleccionada no está disponible. Actualiza la página e intenta de nuevo.');
-            }
-
             Tarifa::create($request->validated());
 
             return redirect()->route('tarifas.index')
@@ -51,21 +36,19 @@ class TarifaController extends Controller
             Log::error('Error al crear tarifa', ['error' => $e->getMessage()]);
 
             return back()->withInput()
-                ->with('error', 'No se pudo guardar la tarifa. Verifica los datos e intenta de nuevo.');
+                ->withErrors(['general' => 'No se pudo guardar la tarifa. Intenta de nuevo.']);
 
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             Log::error('Error inesperado al crear tarifa', ['error' => $e->getMessage()]);
 
             return back()->withInput()
-                ->with('error', 'Ocurrió un error inesperado. Contacta al administrador.');
+                ->withErrors(['general' => 'Ocurrió un error inesperado. Contacta al administrador.']);
         }
     }
 
     public function edit(Tarifa $tarifa): View
     {
-        $canchas = Cancha::where('estado', 'Disponible')->get();
-
-        return view('tarifas.edit', compact('tarifa', 'canchas'));
+        return view('tarifas.edit', compact('tarifa'));
     }
 
     public function update(UpdateTarifaRequest $request, Tarifa $tarifa): RedirectResponse
@@ -77,34 +60,26 @@ class TarifaController extends Controller
                 ->with('success', 'Tarifa actualizada correctamente.');
 
         } catch (QueryException $e) {
-            Log::error('Error al actualizar tarifa', [
-                'tarifa_id' => $tarifa->id,
-                'error'     => $e->getMessage(),
-            ]);
+            Log::error('Error al actualizar tarifa', ['tarifa_id' => $tarifa->id, 'error' => $e->getMessage()]);
 
             return back()->withInput()
-                ->with('error', 'No se pudo actualizar la tarifa. Intenta de nuevo.');
+                ->withErrors(['general' => 'No se pudo actualizar la tarifa. Intenta de nuevo.']);
 
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             Log::error('Error inesperado al actualizar tarifa', ['error' => $e->getMessage()]);
 
             return back()->withInput()
-                ->with('error', 'Ocurrió un error inesperado. Contacta al administrador.');
+                ->withErrors(['general' => 'Ocurrió un error inesperado. Contacta al administrador.']);
         }
     }
 
     public function destroy(Tarifa $tarifa): RedirectResponse
     {
         try {
-            $horariosActivos = $tarifa->horarios()
-                ->whereNotIn('estado', ['Cancelado', 'Completado'])
-                ->count();
-
-            if ($horariosActivos > 0) {
-                return back()->with(
-                    'error',
-                    "No se puede eliminar esta tarifa porque tiene {$horariosActivos} reserva(s) activa(s) asociada(s). Cancélalas primero."
-                );
+            if ($tarifa->horarios()->exists()) {
+                return back()->withErrors([
+                    'general' => 'No se puede eliminar esta tarifa: tiene horarios asociados. Elimínalos primero.',
+                ]);
             }
 
             $tarifa->delete();
@@ -113,20 +88,16 @@ class TarifaController extends Controller
                 ->with('success', 'Tarifa eliminada correctamente.');
 
         } catch (QueryException $e) {
-            Log::error('Error al eliminar tarifa', [
-                'tarifa_id' => $tarifa->id,
-                'error'     => $e->getMessage(),
+            Log::error('Error al eliminar tarifa', ['tarifa_id' => $tarifa->id, 'error' => $e->getMessage()]);
+
+            return back()->withErrors([
+                'general' => 'No se puede eliminar esta tarifa: tiene registros dependientes.',
             ]);
 
-            return back()->with(
-                'error',
-                'No se puede eliminar esta tarifa porque tiene registros asociados en el sistema.'
-            );
-
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             Log::error('Error inesperado al eliminar tarifa', ['error' => $e->getMessage()]);
 
-            return back()->with('error', 'Ocurrió un error inesperado al eliminar la tarifa.');
+            return back()->withErrors(['general' => 'Ocurrió un error inesperado al eliminar la tarifa.']);
         }
     }
 }

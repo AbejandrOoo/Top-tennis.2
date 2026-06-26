@@ -20,12 +20,20 @@
                 {{-- Links desktop --}}
                 <div class="hidden sm:flex items-center gap-1">
                     @php
-                        $links = [
-                            ['route' => 'dashboard',     'label' => 'Inicio',    'pattern' => 'dashboard'],
-                            ['route' => 'canchas.index', 'label' => 'Canchas',   'pattern' => 'canchas.*'],
-                            ['route' => 'tarifas.index', 'label' => 'Tarifas',   'pattern' => 'tarifas.*'],
-                            ['route' => 'horarios.index','label' => 'Horarios',  'pattern' => 'horarios.*'],
-                        ];
+                        $esStaffNav = in_array(Auth::user()->rol, [\App\Enums\Rol::Admin, \App\Enums\Rol::Recepcionista]);
+                        $links = $esStaffNav
+                            ? [
+                                ['route' => 'dashboard',     'label' => 'Inicio',    'pattern' => 'dashboard'],
+                                ['route' => 'canchas.index', 'label' => 'Canchas',   'pattern' => 'canchas.*'],
+                                ['route' => 'tarifas.index', 'label' => 'Tarifas',   'pattern' => 'tarifas.*'],
+                                ['route' => 'horarios.index','label' => 'Horarios',  'pattern' => 'horarios.*'],
+                                ['route' => 'reservas.index','label' => 'Reservas',  'pattern' => 'reservas.index'],
+                            ]
+                            : [
+                                ['route' => 'dashboard',            'label' => 'Inicio',        'pattern' => 'dashboard'],
+                                ['route' => 'reservas.disponibles', 'label' => 'Reservar',      'pattern' => 'reservas.disponibles'],
+                                ['route' => 'reservas.index',       'label' => 'Mis Reservas',  'pattern' => 'reservas.index'],
+                            ];
                     @endphp
                     @foreach($links as $link)
                         <a href="{{ route($link['route']) }}"

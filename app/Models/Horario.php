@@ -12,17 +12,14 @@ class Horario extends Model
     protected $fillable = [
         'cancha_id',
         'tarifa_id',
-        'user_id',
-        'fecha',
         'hora_inicio',
         'hora_fin',
         'estado',
-        'notas',
-        'metodo_pago',
     ];
 
     protected $casts = [
-        'fecha' => 'date',
+        'hora_inicio' => 'datetime',
+        'hora_fin'    => 'datetime',
     ];
 
     public function cancha()
@@ -35,13 +32,19 @@ class Horario extends Model
         return $this->belongsTo(Tarifa::class);
     }
 
-    public function user()
+    public function reserva()
     {
-        return $this->belongsTo(User::class);
+        return $this->hasOne(Reserva::class);
     }
 
-    public function pagos()
+    /**
+     * Horarios que el cliente puede reservar:
+     * disponibles, a futuro y de canchas operativas.
+     */
+    public function scopeReservables($query)
     {
-        return $this->hasMany(Pago::class);
+        return $query->where('estado', 'disponible')
+            ->where('hora_inicio', '>', now())
+            ->whereHas('cancha', fn ($c) => $c->where('estado_mantenimiento', 'operativa'));
     }
 }

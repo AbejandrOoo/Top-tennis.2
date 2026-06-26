@@ -10,10 +10,11 @@ return new class extends Migration
     {
         Schema::create('canchas', function (Blueprint $table) {
             $table->id();
-            $table->string('nombre')->unique(); // Ej: "Cancha Central"
-            $table->string('tipo');             // Arcilla o Sintética
-            $table->enum('estado', ['Disponible', 'No Disponible'])->default('Disponible');
-            $table->softDeletes();              // Borrado lógico para auditoría
+            $table->string('nombre')->unique();        // Ej: "Cancha Central"
+            $table->string('tipo_superficie');          // Arcilla, Sintética, Hierba, Dura
+            $table->enum('estado_mantenimiento', ['operativa', 'en_mantenimiento'])
+                  ->default('operativa');
+            $table->softDeletes();                      // Borrado lógico (integridad)
             $table->timestamps();
         });
     }

@@ -14,27 +14,21 @@ class StoreCanchaRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'nombre'    => ['required', 'string', 'max:100', 'unique:canchas,nombre'],
-            'tipo'      => ['required', 'in:Arcilla,Sintética,Hierba,Dura'],
-            'modalidad' => ['required', 'in:Singles,Dobles'],
-            'capacidad' => ['required', 'integer', 'min:1', 'max:8'],
-            'estado'    => ['required', 'in:Disponible,No Disponible,Bloqueada'],
+            'nombre'               => ['required', 'string', 'max:100', 'unique:canchas,nombre'],
+            'tipo_superficie'      => ['required', 'in:Arcilla,Sintética,Hierba,Dura'],
+            'estado_mantenimiento' => ['required', 'in:operativa,en_mantenimiento'],
         ];
     }
 
     public function messages(): array
     {
         return [
-            'nombre.required'    => 'El nombre de la cancha es obligatorio.',
-            'nombre.unique'      => 'Ya existe una cancha con ese nombre.',
-            'tipo.required'      => 'El tipo de superficie es obligatorio.',
-            'tipo.in'            => 'El tipo debe ser Arcilla, Sintética, Hierba o Dura.',
-            'modalidad.required' => 'La modalidad es obligatoria.',
-            'modalidad.in'       => 'La modalidad debe ser Singles o Dobles.',
-            'capacidad.required' => 'La capacidad es obligatoria.',
-            'capacidad.integer'  => 'La capacidad debe ser un número entero.',
-            'estado.required'    => 'El estado es obligatorio.',
-            'estado.in'          => 'Estado inválido.',
+            'nombre.required'               => 'El nombre de la cancha es obligatorio.',
+            'nombre.unique'                 => 'Ya existe una cancha con ese nombre.',
+            'tipo_superficie.required'      => 'El tipo de superficie es obligatorio.',
+            'tipo_superficie.in'            => 'La superficie debe ser Arcilla, Sintética, Hierba o Dura.',
+            'estado_mantenimiento.required' => 'El estado es obligatorio.',
+            'estado_mantenimiento.in'       => 'Estado inválido.',
         ];
     }
 }

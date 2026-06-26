@@ -10,14 +10,12 @@ return new class extends Migration
     {
         Schema::create('horarios', function (Blueprint $table) {
             $table->id();
+            // El admin crea horarios (slots) asignando cancha y tarifa
             $table->foreignId('cancha_id')->constrained('canchas')->onDelete('restrict');
             $table->foreignId('tarifa_id')->constrained('tarifas')->onDelete('restrict');
-            $table->foreignId('user_id')->constrained('users')->onDelete('restrict');
-            $table->date('fecha');
-            $table->time('hora_inicio');
-            $table->time('hora_fin');
-            $table->enum('estado', ['Reservado', 'Confirmado', 'Cancelado', 'Completado'])->default('Reservado');
-            $table->text('notas')->nullable();
+            $table->dateTime('hora_inicio');
+            $table->dateTime('hora_fin');
+            $table->enum('estado', ['disponible', 'reservado'])->default('disponible');
             $table->softDeletes();
             $table->timestamps();
         });

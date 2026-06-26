@@ -5,17 +5,19 @@ namespace Database\Seeders;
 use App\Enums\Rol;
 use App\Models\Cancha;
 use App\Models\Horario;
+use App\Models\Reserva;
 use App\Models\Tarifa;
 use App\Models\User;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        // Usuarios de prueba para cada rol
-        User::create([
+        // ===== Usuarios =====
+        $admin = User::create([
             'name'     => 'Administrador',
             'email'    => 'admin@toptennis.com',
             'password' => Hash::make('password'),
@@ -29,128 +31,83 @@ class DatabaseSeeder extends Seeder
             'rol'      => Rol::Recepcionista,
         ]);
 
-        User::create([
+        $cliente = User::create([
             'name'     => 'Cliente Demo',
             'email'    => 'cliente@toptennis.com',
             'password' => Hash::make('password'),
             'rol'      => Rol::Cliente,
         ]);
 
-        // Canchas de ejemplo
-        $cancha1 = Cancha::create([
-            'nombre' => 'Cancha Central',
-            'tipo'   => 'Arcilla',
-            'estado' => 'Disponible',
+        // ===== Canchas =====
+        $central = Cancha::create([
+            'nombre'               => 'Cancha Central',
+            'tipo_superficie'      => 'Arcilla',
+            'estado_mantenimiento' => 'operativa',
         ]);
 
-        $cancha2 = Cancha::create([
-            'nombre' => 'Cancha Norte',
-            'tipo'   => 'Sintética',
-            'estado' => 'Disponible',
+        $norte = Cancha::create([
+            'nombre'               => 'Cancha Norte',
+            'tipo_superficie'      => 'Sintética',
+            'estado_mantenimiento' => 'operativa',
         ]);
 
-        $cancha3 = Cancha::create([
-            'nombre' => 'Cancha Sur',
-            'tipo'   => 'Arcilla',
-            'estado' => 'No Disponible',
+        Cancha::create([
+            'nombre'               => 'Cancha Sur',
+            'tipo_superficie'      => 'Arcilla',
+            'estado_mantenimiento' => 'en_mantenimiento',
         ]);
 
-        // Tarifas para Cancha Central
-        Tarifa::create([
-            'cancha_id'   => $cancha1->id,
-            'precio_hora' => 15.00,
-            'hora_inicio' => '07:00',
-            'hora_fin'    => '12:00',
-            'turno'       => 'Mañana',
-            'estado'      => 'Activa',
-        ]);
+        // ===== Tarifas =====
+        $manana = Tarifa::create(['nombre_tarifa' => 'Tarifa Mañana', 'precio' => 15.00]);
+        $tarde  = Tarifa::create(['nombre_tarifa' => 'Tarifa Tarde',  'precio' => 18.00]);
+        $noche  = Tarifa::create(['nombre_tarifa' => 'Hora Punta (Noche)', 'precio' => 22.00]);
 
-        Tarifa::create([
-            'cancha_id'   => $cancha1->id,
-            'precio_hora' => 18.00,
-            'hora_inicio' => '12:00',
-            'hora_fin'    => '18:00',
-            'turno'       => 'Tarde',
-            'estado'      => 'Activa',
-        ]);
+        // ===== Horarios (slots) a futuro =====
+        $hoy = Carbon::today();
 
-        Tarifa::create([
-            'cancha_id'   => $cancha1->id,
-            'precio_hora' => 20.00,
-            'hora_inicio' => '18:00',
-            'hora_fin'    => '22:00',
-            'turno'       => 'Noche',
-            'estado'      => 'Activa',
-        ]);
+        $slots = [
+            [$central, $manana, 1, '08:00', '09:00', 'disponible'],
+            [$central, $tarde,  1, '15:00', '16:00', 'disponible'],
+            [$central, $noche,  2, '19:00', '20:00', 'disponible'],
+            [$norte,   $manana, 1, '09:00', '10:00', 'disponible'],
+            [$norte,   $tarde,  2, '16:00', '17:00', 'disponible'],
+            [$norte,   $noche,  3, '20:00', '21:00', 'disponible'],
+        ];
 
-        // Tarifas para Cancha Norte
-        Tarifa::create([
-            'cancha_id'   => $cancha2->id,
-            'precio_hora' => 12.00,
-            'hora_inicio' => '07:00',
-            'hora_fin'    => '12:00',
-            'turno'       => 'Mañana',
-            'estado'      => 'Activa',
-        ]);
+        $horariosCreados = [];
+        foreach ($slots as [$cancha, $tarifa, $diasAdelante, $ini, $fin, $estado]) {
+            $fecha = $hoy->copy()->addDays($diasAdelante);
+            $horariosCreados[] = Horario::create([
+                'cancha_id'   => $cancha->id,
+                'tarifa_id'   => $tarifa->id,
+                'hora_inicio' => $fecha->copy()->setTimeFromTimeString($ini),
+                'hora_fin'    => $fecha->copy()->setTimeFromTimeString($fin),
+                'estado'      => $estado,
+            ]);
+        }
 
-        $tarifaNorteTarde = Tarifa::create([
-            'cancha_id'   => $cancha2->id,
-            'precio_hora' => 14.00,
-            'hora_inicio' => '12:00',
-            'hora_fin'    => '22:00',
-            'turno'       => 'Tarde',
-            'estado'      => 'Inactiva',
+        // ===== Reserva 1: Yape (aprobada) sobre el primer slot =====
+        $primero = $horariosCreados[0];
+        Reserva::create([
+            'user_id'           => $cliente->id,
+            'horario_id'        => $primero->id,
+            'metodo_pago'       => 'Yape',
+            'numero_operacion'  => '01234567',
+            'estado_pago'       => Reserva::ESTADO_APROBADO,
+            'codigo_validacion' => Reserva::generarCodigoValidacion(),
         ]);
+        $primero->update(['estado' => 'reservado']);
 
-        // Usuarios ya creados arriba
-        $admin        = User::where('email', 'admin@toptennis.com')->first();
-        $cliente      = User::where('email', 'cliente@toptennis.com')->first();
-        $tarifaMañana = Tarifa::where('cancha_id', $cancha1->id)->where('turno', 'Mañana')->first();
-        $tarifaTarde  = Tarifa::where('cancha_id', $cancha1->id)->where('turno', 'Tarde')->first();
-        $tarifaNoche  = Tarifa::where('cancha_id', $cancha1->id)->where('turno', 'Noche')->first();
-        $tarifaNorteM = Tarifa::where('cancha_id', $cancha2->id)->where('turno', 'Mañana')->first();
-
-        // Horarios de ejemplo
-        Horario::create([
-            'cancha_id'   => $cancha1->id,
-            'tarifa_id'   => $tarifaMañana->id,
-            'user_id'     => $cliente->id,
-            'fecha'       => now()->addDays(1)->toDateString(),
-            'hora_inicio' => '08:00',
-            'hora_fin'    => '10:00',
-            'estado'      => 'Confirmado',
-            'notas'       => 'Partido de práctica',
+        // ===== Reserva 2: Efectivo (pendiente) con plazo de pago a 30 min =====
+        $segundo = $horariosCreados[1];
+        Reserva::create([
+            'user_id'           => $cliente->id,
+            'horario_id'        => $segundo->id,
+            'metodo_pago'       => 'Efectivo',
+            'estado_pago'       => Reserva::ESTADO_PENDIENTE,
+            'expira_at'         => $segundo->hora_inicio->copy()->subMinutes(Reserva::MINUTOS_GRACIA),
+            'codigo_validacion' => Reserva::generarCodigoValidacion(),
         ]);
-
-        Horario::create([
-            'cancha_id'   => $cancha1->id,
-            'tarifa_id'   => $tarifaTarde->id,
-            'user_id'     => $admin->id,
-            'fecha'       => now()->addDays(2)->toDateString(),
-            'hora_inicio' => '14:00',
-            'hora_fin'    => '16:00',
-            'estado'      => 'Reservado',
-        ]);
-
-        Horario::create([
-            'cancha_id'   => $cancha2->id,
-            'tarifa_id'   => $tarifaNorteM->id,
-            'user_id'     => $cliente->id,
-            'fecha'       => now()->addDays(3)->toDateString(),
-            'hora_inicio' => '09:00',
-            'hora_fin'    => '11:00',
-            'estado'      => 'Reservado',
-            'notas'       => 'Clase particular',
-        ]);
-
-        Horario::create([
-            'cancha_id'   => $cancha1->id,
-            'tarifa_id'   => $tarifaNoche->id,
-            'user_id'     => $cliente->id,
-            'fecha'       => now()->subDays(2)->toDateString(),
-            'hora_inicio' => '19:00',
-            'hora_fin'    => '21:00',
-            'estado'      => 'Completado',
-        ]);
+        $segundo->update(['estado' => 'reservado']);
     }
 }

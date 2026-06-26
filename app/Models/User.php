@@ -30,13 +30,8 @@ class User extends Authenticatable
         'rol' => \App\Enums\Rol::class,
     ];
 
-    public function horarios()
+    public function reservas()
     {
-        return $this->hasMany(Horario::class);
-    }
-
-    public function pagosCobrados()
-    {
-        return $this->hasMany(Pago::class, 'cobrado_por');
+        return $this->hasMany(Reserva::class);
     }
 }

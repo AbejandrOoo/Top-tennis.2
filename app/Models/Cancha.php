@@ -12,19 +12,30 @@ class Cancha extends Model
 
     protected $fillable = [
         'nombre',
-        'tipo',
-        'modalidad',
-        'capacidad',
-        'estado',
+        'tipo_superficie',
+        'estado_mantenimiento',
     ];
-
-    public function tarifas()
-    {
-        return $this->hasMany(Tarifa::class);
-    }
 
     public function horarios()
     {
         return $this->hasMany(Horario::class);
+    }
+
+    /**
+     * Reservas futuras todavía activas (horario reservado con inicio en el futuro).
+     * Sirve para la regla de bloqueo por mantenimiento.
+     */
+    public function reservasFuturasActivas()
+    {
+        return Reserva::whereHas('horario', function ($q) {
+            $q->where('cancha_id', $this->id)
+              ->where('estado', 'reservado')
+              ->where('hora_inicio', '>', now());
+        });
+    }
+
+    public function estaOperativa(): bool
+    {
+        return $this->estado_mantenimiento === 'operativa';
     }
 }

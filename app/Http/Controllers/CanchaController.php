@@ -14,7 +14,8 @@ class CanchaController extends Controller
 {
     public function index(): View
     {
-        $canchas = Cancha::with('tarifas')->latest()->paginate(10);
+        $canchas = Cancha::withCount('horarios')->latest()->paginate(10);
+
         return view('canchas.index', compact('canchas'));
     }
 
@@ -28,26 +29,20 @@ class CanchaController extends Controller
         try {
             Cancha::create($request->validated());
 
-            return redirect()->route('dashboard')
-                ->with('open_tab', 'canchas')
+            return redirect()->route('canchas.index')
                 ->with('success', 'Cancha creada correctamente.');
 
         } catch (QueryException $e) {
-            if ($e->getCode() === '23000') {
-                return back()->withInput()
-                    ->with('error', 'Ya existe una cancha con ese nombre. Elige un nombre diferente.');
-            }
-
             Log::error('Error al crear cancha', ['error' => $e->getMessage()]);
 
             return back()->withInput()
-                ->with('error', 'No se pudo guardar la cancha. Intenta de nuevo.');
+                ->withErrors(['general' => 'No se pudo guardar la cancha. Intenta de nuevo.']);
 
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             Log::error('Error inesperado al crear cancha', ['error' => $e->getMessage()]);
 
             return back()->withInput()
-                ->with('error', 'Ocurrió un error inesperado. Contacta al administrador.');
+                ->withErrors(['general' => 'Ocurrió un error inesperado. Contacta al administrador.']);
         }
     }
 
@@ -61,68 +56,49 @@ class CanchaController extends Controller
         try {
             $cancha->update($request->validated());
 
-            return redirect()->route('dashboard')
-                ->with('open_tab', 'canchas')
+            return redirect()->route('canchas.index')
                 ->with('success', 'Cancha actualizada correctamente.');
 
         } catch (QueryException $e) {
-            if ($e->getCode() === '23000') {
-                return back()->withInput()
-                    ->with('error', 'Ya existe una cancha con ese nombre. Elige un nombre diferente.');
-            }
-
-            Log::error('Error al actualizar cancha', [
-                'cancha_id' => $cancha->id,
-                'error'     => $e->getMessage(),
-            ]);
+            Log::error('Error al actualizar cancha', ['cancha_id' => $cancha->id, 'error' => $e->getMessage()]);
 
             return back()->withInput()
-                ->with('error', 'No se pudo actualizar la cancha. Intenta de nuevo.');
+                ->withErrors(['general' => 'No se pudo actualizar la cancha. Intenta de nuevo.']);
 
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             Log::error('Error inesperado al actualizar cancha', ['error' => $e->getMessage()]);
 
             return back()->withInput()
-                ->with('error', 'Ocurrió un error inesperado. Contacta al administrador.');
+                ->withErrors(['general' => 'Ocurrió un error inesperado. Contacta al administrador.']);
         }
     }
 
     public function destroy(Cancha $cancha): RedirectResponse
     {
         try {
-            $horariosActivos = $cancha->horarios()
-                ->whereNotIn('estado', ['Cancelado', 'Completado'])
-                ->count();
-
-            if ($horariosActivos > 0) {
-                return back()->with(
-                    'error',
-                    "No se puede eliminar \"{$cancha->nombre}\" porque tiene {$horariosActivos} reserva(s) activa(s). Cancélalas primero."
-                );
+            if ($cancha->horarios()->exists()) {
+                return back()->withErrors([
+                    'general' => "No se puede eliminar \"{$cancha->nombre}\": tiene horarios asociados. Elimínalos primero.",
+                ]);
             }
 
             $nombre = $cancha->nombre;
             $cancha->delete();
 
-            return redirect()->route('dashboard')
-                ->with('open_tab', 'canchas')
+            return redirect()->route('canchas.index')
                 ->with('success', "Cancha \"{$nombre}\" eliminada correctamente.");
 
         } catch (QueryException $e) {
-            Log::error('Error al eliminar cancha', [
-                'cancha_id' => $cancha->id,
-                'error'     => $e->getMessage(),
+            Log::error('Error al eliminar cancha', ['cancha_id' => $cancha->id, 'error' => $e->getMessage()]);
+
+            return back()->withErrors([
+                'general' => "No se puede eliminar \"{$cancha->nombre}\": tiene registros dependientes.",
             ]);
 
-            return back()->with(
-                'error',
-                "No se puede eliminar \"{$cancha->nombre}\" porque tiene tarifas o registros asociados. Elimina primero los datos relacionados."
-            );
-
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             Log::error('Error inesperado al eliminar cancha', ['error' => $e->getMessage()]);
 
-            return back()->with('error', 'Ocurrió un error inesperado al eliminar la cancha.');
+            return back()->withErrors(['general' => 'Ocurrió un error inesperado al eliminar la cancha.']);
         }
     }
 }
