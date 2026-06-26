@@ -34,4 +34,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(Horario::class);
     }
+
+    public function pagosCobrados()
+    {
+        return $this->hasMany(Pago::class, 'cobrado_por');
+    }
 }

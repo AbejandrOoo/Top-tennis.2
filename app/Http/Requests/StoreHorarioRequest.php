@@ -22,7 +22,7 @@ class StoreHorarioRequest extends FormRequest
             'hora_inicio' => ['required', 'date_format:H:i'],
             'hora_fin'    => ['required', 'date_format:H:i', 'after:hora_inicio'],
             'notas'        => ['nullable', 'string', 'max:500'],
-            'metodo_pago'  => ['nullable', 'in:Yape,Efectivo'],
+            'metodo_pago'  => ['nullable', 'in:Efectivo,Tarjeta,Transferencia,Otro'],
         ];
     }
 

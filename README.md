@@ -1,58 +1,220 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+<div align="center">
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+# 🎾 Top Tennis
 
-## About Laravel
+**Sistema de gestión de reservas de canchas de tenis**
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+![PHP](https://img.shields.io/badge/PHP-8.2-777BB4?style=flat-square&logo=php&logoColor=white)
+![Laravel](https://img.shields.io/badge/Laravel-12-FF2D20?style=flat-square&logo=laravel&logoColor=white)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind-3-38BDF8?style=flat-square&logo=tailwindcss&logoColor=white)
+![SQLite](https://img.shields.io/badge/SQLite-003B57?style=flat-square&logo=sqlite&logoColor=white)
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+</div>
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+---
 
-## Learning Laravel
+## Descripción
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+Top Tennis es una aplicación web para la gestión integral de un club de tenis. Permite administrar canchas, tarifas por turno, reservas de horarios y registro de pagos — con control de acceso basado en tres roles: **Administrador**, **Recepcionista** y **Cliente**.
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+---
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+## Características
 
-## Agentic Development
+- **Gestión de canchas** — altas, bajas lógicas, superficie, modalidad (Singles/Dobles) y estado
+- **Tarifas por turno** — Mañana, Tarde y Noche con precio por hora configurable por cancha
+- **Reservas** — flujo completo con estados: `Reservado → Confirmado → Completado / Cancelado`
+- **Pagos** — registro de cobros con método de pago y auditoría
+- **Control de solapamiento** — constraint único en BD + validación en PHP para evitar doble reserva
+- **Soft Deletes** en todas las tablas de negocio para trazabilidad completa
+- **Roles** — Admin, Recepcionista y Cliente con permisos diferenciados
 
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+---
+
+## Roles y accesos
+
+| Rol | Puede hacer |
+|---|---|
+| `admin` | Todo — canchas, tarifas, reservas, usuarios, pagos |
+| `recepcionista` | Gestionar reservas y consultar canchas/tarifas |
+| `cliente` | Ver y crear sus propias reservas |
+
+---
+
+## Stack
+
+| Capa | Tecnología |
+|---|---|
+| Backend | Laravel 12 + PHP 8.2 |
+| Frontend | Blade + Tailwind CSS 3 + Vite |
+| Base de datos | SQLite (dev) / MySQL (prod) |
+| Auth | Laravel Breeze |
+
+---
+
+## Instalación
 
 ```bash
-composer require laravel/boost --dev
+# 1. Clonar el repositorio
+git clone https://github.com/tu-usuario/top-tennis.git
+cd top-tennis
 
-php artisan boost:install
+# 2. Instalar dependencias
+composer install
+npm install
+
+# 3. Configurar entorno
+cp .env.example .env
+php artisan key:generate
+
+# 4. Migrar y cargar datos de prueba
+php artisan migrate --seed
+
+# 5. Compilar assets y levantar servidor
+npm run dev
+php artisan serve
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+### Usuarios de prueba
 
-## Contributing
+| Email | Password | Rol |
+|---|---|---|
+| admin@toptennis.com | password | Administrador |
+| recepcionista@toptennis.com | password | Recepcionista |
+| cliente@toptennis.com | password | Cliente |
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+---
 
-## Code of Conduct
+## Diagrama Entidad-Relación
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+```mermaid
+erDiagram
+    users {
+        bigint id PK
+        string name
+        string email UK
+        string telefono
+        string password
+        string rol
+        string emoji_perfil
+        timestamp created_at
+        timestamp updated_at
+    }
 
-## Security Vulnerabilities
+    canchas {
+        bigint id PK
+        string nombre UK
+        string tipo
+        enum estado
+        enum modalidad
+        tinyint capacidad
+        timestamp deleted_at
+        timestamp created_at
+        timestamp updated_at
+    }
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+    tarifas {
+        bigint id PK
+        bigint cancha_id FK
+        decimal precio_hora
+        time hora_inicio
+        time hora_fin
+        string turno
+        enum estado
+        timestamp deleted_at
+        timestamp created_at
+        timestamp updated_at
+    }
 
-## License
+    horarios {
+        bigint id PK
+        bigint cancha_id FK
+        bigint tarifa_id FK
+        bigint user_id FK
+        date fecha
+        time hora_inicio
+        time hora_fin
+        enum estado
+        text notas
+        string metodo_pago
+        timestamp deleted_at
+        timestamp created_at
+        timestamp updated_at
+    }
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+    pagos {
+        bigint id PK
+        bigint horario_id FK
+        bigint cobrado_por FK
+        decimal monto
+        enum metodo_pago
+        enum estado
+        date fecha_pago
+        text notas
+        timestamp deleted_at
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    canchas  ||--o{ tarifas   : "tiene"
+    canchas  ||--o{ horarios  : "es reservada en"
+    tarifas  ||--o{ horarios  : "aplica a"
+    users    ||--o{ horarios  : "reserva"
+    horarios ||--o{ pagos     : "genera"
+    users    ||--o{ pagos     : "cobra"
+```
+
+### Valores posibles por campo
+
+| Tabla | Campo | Valores |
+|---|---|---|
+| `users` | `rol` | `admin` · `recepcionista` · `cliente` |
+| `canchas` | `tipo` | `Arcilla` · `Sintética` · `Hierba` · `Dura` |
+| `canchas` | `estado` | `Disponible` · `No Disponible` · `Bloqueada` |
+| `canchas` | `modalidad` | `Singles` · `Dobles` |
+| `tarifas` | `turno` | `Mañana` · `Tarde` · `Noche` |
+| `tarifas` | `estado` | `Activa` · `Inactiva` |
+| `horarios` | `estado` | `Reservado` · `Confirmado` · `Cancelado` · `Completado` |
+| `horarios` | `metodo_pago` | `Efectivo` · `Tarjeta` · `Transferencia` · `Otro` |
+| `pagos` | `metodo_pago` | `Efectivo` · `Tarjeta` · `Transferencia` · `Otro` |
+| `pagos` | `estado` | `Pendiente` · `Pagado` · `Reembolsado` |
+
+### Constraints clave
+
+- `horarios` → unique en `(cancha_id, fecha, hora_inicio)` — **impide doble reserva a nivel BD**
+- Todas las FK usan `onDelete RESTRICT` — protege la integridad al eliminar
+- Todas las tablas de negocio usan **Soft Deletes** para auditoría completa
+
+---
+
+## Estructura del proyecto
+
+```
+app/
+├── Enums/
+│   └── Rol.php                  # Enum: admin | recepcionista | cliente
+├── Http/
+│   ├── Controllers/
+│   │   ├── CanchaController.php
+│   │   ├── TarifaController.php
+│   │   ├── HorarioController.php
+│   │   └── ProfileController.php
+│   └── Requests/                # Form Requests con validación de negocio
+├── Models/
+│   ├── User.php
+│   ├── Cancha.php
+│   ├── Tarifa.php
+│   ├── Horario.php
+│   └── Pago.php
+database/
+├── migrations/                  # 13 migraciones ordenadas
+└── seeders/
+    └── DatabaseSeeder.php       # Datos de prueba listos
+resources/views/                 # Vistas Blade
+```
+
+---
+
+## Licencia
+
+Proyecto privado — Top Tennis Club.

@@ -23,6 +23,7 @@ class UpdateHorarioRequest extends FormRequest
             'hora_fin'    => ['required', 'date_format:H:i', 'after:hora_inicio'],
             'estado'      => ['required', 'in:Reservado,Confirmado,Cancelado,Completado'],
             'notas'       => ['nullable', 'string', 'max:500'],
+            'metodo_pago' => ['nullable', 'in:Efectivo,Tarjeta,Transferencia,Otro'],
         ];
     }
 
