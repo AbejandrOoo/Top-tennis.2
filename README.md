@@ -47,7 +47,7 @@ Top Tennis es una aplicación web para la gestión integral de un club de tenis.
 |---|---|
 | Backend | Laravel 12 + PHP 8.2 |
 | Frontend | Blade + Tailwind CSS 3 + Vite |
-| Base de datos | SQLite (dev) / MySQL (prod) |
+| Base de datos | MySQL (XAMPP) |
 | Auth | Laravel Breeze |
 
 ---
