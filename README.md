@@ -215,6 +215,13 @@ resources/views/                 # Vistas Blade
 
 ---
 
+## Desarrolladores
+
+Proyecto desarrollado por **Renzo León** y **Diego Magallanes**  
+**Dienzo INC** — Software Development
+
+---
+
 ## Licencia
 
 Proyecto privado — Top Tennis Club.
