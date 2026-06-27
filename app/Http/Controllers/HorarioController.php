@@ -14,6 +14,10 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 
+// CONTROLADOR DE HORARIOS: GESTIONA LOS SLOTS DE TIEMPO RESERVABLES
+// METODOS: index (LISTAR), create/store (GENERACION MASIVA), edit/update, destroy
+// METODOS EXTRA: cambiarTarifaMasiva (CAMBIO EN LOTE), eliminarDia (BORRADO EN LOTE)
+// ACCESO: SOLO ADMIN (PROTEGIDO POR MIDDLEWARE role:admin EN web.php)
 class HorarioController extends Controller
 {
     public function index(Request $request): View|RedirectResponse
@@ -24,11 +28,13 @@ class HorarioController extends Controller
 
             $fecha = Carbon::parse($fechaStr)->startOfDay();
 
-            $canchas = Cancha::orderBy('nombre')->get();
+            $canchas = Cancha::orderBy('id')->get();
+            $tarifas = Tarifa::orderBy('nombre_tarifa')->get();
 
             $query = Horario::with(['cancha', 'tarifa'])
                 ->whereDate('hora_inicio', $fecha)
-                ->orderBy('hora_inicio');
+                ->orderBy('hora_inicio')
+                ->orderBy('cancha_id');
 
             if ($canchaId) {
                 $query->where('cancha_id', $canchaId);
@@ -45,7 +51,7 @@ class HorarioController extends Controller
             ];
 
             return view('horarios.index', compact(
-                'horarios', 'canchas', 'fecha', 'fechaStr', 'canchaId', 'fechas', 'stats'
+                'horarios', 'canchas', 'tarifas', 'fecha', 'fechaStr', 'canchaId', 'fechas', 'stats'
             ));
         } catch (\Throwable $e) {
             Log::error('Error al listar horarios', ['error' => $e->getMessage()]);
@@ -54,10 +60,38 @@ class HorarioController extends Controller
         }
     }
 
+    // CAMBIO MASIVO DE TARIFA: PERMITE SELECCIONAR VARIOS HORARIOS Y CAMBIAR SU TARIFA EN LOTE
+    // SOLO AFECTA HORARIOS CON ESTADO 'disponible' (LOS RESERVADOS NO SE TOCAN)
+    // SE USA PARA APLICAR TARIFAS DE OFERTA A FRANJAS HORARIAS ESPECIFICAS
+    public function cambiarTarifaMasiva(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'horario_ids'   => ['required', 'array', 'min:1'],
+            'horario_ids.*' => ['integer', 'exists:horarios,id'],
+            'tarifa_id'     => ['required', 'exists:tarifas,id'],
+        ], [
+            'horario_ids.required' => 'Selecciona al menos un horario.',
+            'tarifa_id.required'   => 'Selecciona una tarifa.',
+        ]);
+
+        try {
+            $actualizados = Horario::whereIn('id', $validated['horario_ids'])
+                ->where('estado', 'disponible')
+                ->update(['tarifa_id' => $validated['tarifa_id']]);
+
+            $tarifa = Tarifa::find($validated['tarifa_id']);
+
+            return back()->with('success', "{$actualizados} horarios actualizados a {$tarifa->nombre_tarifa}.");
+        } catch (\Throwable $e) {
+            Log::error('Error al cambiar tarifa masiva', ['error' => $e->getMessage()]);
+            return back()->withErrors(['general' => 'No se pudo cambiar la tarifa.']);
+        }
+    }
+
     public function create(): View|RedirectResponse
     {
         try {
-            $canchas = Cancha::where('estado_mantenimiento', 'operativa')->orderBy('nombre')->get();
+            $canchas = Cancha::where('estado_mantenimiento', 'operativa')->orderBy('id')->get();
             $tarifas = Tarifa::orderBy('nombre_tarifa')->get();
             return view('horarios.create', compact('canchas', 'tarifas'));
         } catch (\Throwable $e) {
@@ -67,6 +101,9 @@ class HorarioController extends Controller
         }
     }
 
+    // STORE: GENERACION MASIVA DE HORARIOS
+    // RECIBE: RANGO DE FECHAS + HORAS DE OPERACION + CANCHAS + TARIFAS POR FRANJA
+    // ITERA: FECHA x CANCHA x HORA, SALTA DUPLICADOS, ASIGNA TARIFA DIA O NOCHE
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
@@ -153,7 +190,7 @@ class HorarioController extends Controller
                     ->withErrors(['general' => 'No se puede editar un horario que ya está reservado.']);
             }
 
-            $canchas = Cancha::where('estado_mantenimiento', 'operativa')->orderBy('nombre')->get();
+            $canchas = Cancha::where('estado_mantenimiento', 'operativa')->orderBy('id')->get();
             $tarifas = Tarifa::orderBy('nombre_tarifa')->get();
 
             return view('horarios.edit', compact('horario', 'canchas', 'tarifas'));

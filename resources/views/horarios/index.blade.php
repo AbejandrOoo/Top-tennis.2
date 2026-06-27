@@ -14,7 +14,25 @@
         </div>
     </x-slot>
 
-    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    @php
+        $idsDisponibles = $horarios
+            ->filter(fn($h) => $h->estado === 'disponible' && !$h->hora_inicio->lt(now()))
+            ->pluck('id')
+            ->map(fn($id) => (string) $id)
+            ->values();
+    @endphp
+
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8"
+         x-data="{
+            seleccionados: [],
+            disponibles: {{ Js::from($idsDisponibles) }},
+            get todosSeleccionados() {
+                return this.disponibles.length > 0 && this.disponibles.every(id => this.seleccionados.includes(id));
+            },
+            toggleTodos() {
+                this.seleccionados = this.todosSeleccionados ? [] : [...this.disponibles];
+            }
+         }">
 
         @include('partials.errores')
 
@@ -102,11 +120,18 @@
                 <table class="w-full text-sm">
                     <thead class="table-header">
                         <tr>
-                            <th class="text-left px-6 py-3">Hora</th>
-                            <th class="text-left px-6 py-3">Cancha</th>
-                            <th class="text-left px-6 py-3">Tarifa</th>
-                            <th class="text-left px-6 py-3">Precio</th>
-                            <th class="text-left px-6 py-3">Estado</th>
+                            <th class="text-center px-3 py-3 w-10">
+                                <input type="checkbox"
+                                       class="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                                       :checked="todosSeleccionados"
+                                       @click="toggleTodos()"
+                                       x-show="disponibles.length > 0">
+                            </th>
+                            <th class="text-left px-4 py-3">Hora</th>
+                            <th class="text-left px-4 py-3">Cancha</th>
+                            <th class="text-left px-4 py-3">Tarifa</th>
+                            <th class="text-left px-4 py-3">Precio</th>
+                            <th class="text-left px-4 py-3">Estado</th>
                             <th class="text-right px-6 py-3">Acciones</th>
                         </tr>
                     </thead>
@@ -115,16 +140,26 @@
                             @php
                                 $esReservado = $horario->estado === 'reservado';
                                 $esPasado = $horario->hora_inicio->lt(now());
+                                $esSeleccionable = !$esReservado && !$esPasado;
                             @endphp
-                            <tr class="{{ $esPasado ? 'opacity-40' : '' }} {{ $esReservado ? 'bg-blue-50/50' : '' }}">
-                                <td class="px-6 py-3">
+                            <tr class="{{ $esPasado ? 'opacity-40' : '' }} {{ $esReservado ? 'bg-blue-50/50' : '' }}"
+                                :class="seleccionados.includes('{{ $horario->id }}') ? 'bg-emerald-50/60' : ''">
+                                <td class="text-center px-3 py-3">
+                                    @if($esSeleccionable)
+                                        <input type="checkbox"
+                                               value="{{ $horario->id }}"
+                                               x-model="seleccionados"
+                                               class="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500">
+                                    @endif
+                                </td>
+                                <td class="px-4 py-3">
                                     <span class="font-bold text-slate-800">
                                         {{ $horario->hora_inicio->format('H:i') }}
                                     </span>
                                     <span class="text-slate-300 mx-1">–</span>
                                     <span class="text-slate-500">{{ $horario->hora_fin->format('H:i') }}</span>
                                 </td>
-                                <td class="px-6 py-3">
+                                <td class="px-4 py-3">
                                     <div class="flex items-center gap-2">
                                         <div class="w-6 h-6 rounded overflow-hidden shrink-0 border border-slate-100">
                                             <img src="{{ $horario->cancha?->imagenUrl() }}" class="w-full h-full object-cover" alt="">
@@ -132,13 +167,13 @@
                                         <span class="font-medium text-slate-700">{{ $horario->cancha?->nombre ?? '—' }}</span>
                                     </div>
                                 </td>
-                                <td class="px-6 py-3 text-slate-500">
+                                <td class="px-4 py-3 text-slate-500">
                                     {{ $horario->tarifa?->nombre_tarifa ?? '—' }}
                                 </td>
-                                <td class="px-6 py-3">
+                                <td class="px-4 py-3">
                                     <span class="font-bold text-emerald-700">S/ {{ number_format($horario->tarifa?->precio ?? 0, 2) }}</span>
                                 </td>
-                                <td class="px-6 py-3">
+                                <td class="px-4 py-3">
                                     @if($esPasado)
                                         <span class="badge badge-gray text-xs">Pasado</span>
                                     @elseif($esReservado)
@@ -147,9 +182,9 @@
                                         <span class="badge badge-green text-xs">Disponible</span>
                                     @endif
                                 </td>
-                                <td class="px-6 py-3">
+                                <td class="px-4 py-3">
                                     <div class="flex items-center justify-end gap-2">
-                                        @if(!$esReservado && !$esPasado)
+                                        @if($esSeleccionable)
                                             <a href="{{ route('horarios.edit', $horario) }}"
                                                class="btn-outline-sm text-xs py-1 px-2.5">Editar</a>
                                             <form method="POST" action="{{ route('horarios.destroy', $horario) }}"
@@ -169,6 +204,44 @@
                     </tbody>
                 </table>
             @endif
+        </div>
+
+        {{-- Barra flotante de acciones masivas --}}
+        <div x-show="seleccionados.length > 0" x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0"
+             x-transition:leave="transition ease-in duration-150"
+             x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 translate-y-4"
+             class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50" x-cloak>
+            <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 px-6 py-4 flex items-center gap-4">
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center">
+                        <span class="text-sm font-black text-emerald-700" x-text="seleccionados.length"></span>
+                    </div>
+                    <span class="text-sm font-semibold text-slate-600">seleccionados</span>
+                </div>
+
+                <div class="w-px h-8 bg-slate-200"></div>
+
+                <form method="POST" action="{{ route('horarios.cambiarTarifa') }}" class="flex items-center gap-2">
+                    @csrf
+                    <template x-for="id in seleccionados" :key="id">
+                        <input type="hidden" name="horario_ids[]" :value="id">
+                    </template>
+                    <select name="tarifa_id" class="text-sm border border-slate-200 rounded-lg px-3 py-2 focus:ring-emerald-500 focus:border-emerald-500" required>
+                        <option value="">Cambiar tarifa a...</option>
+                        @foreach($tarifas as $tarifa)
+                            <option value="{{ $tarifa->id }}">{{ $tarifa->nombre_tarifa }} — S/ {{ number_format($tarifa->precio, 2) }}</option>
+                        @endforeach
+                    </select>
+                    <button type="submit" class="btn-primary text-sm py-2 px-4">Aplicar</button>
+                </form>
+
+                <div class="w-px h-8 bg-slate-200"></div>
+
+                <button @click="seleccionados = []" class="text-xs text-slate-400 hover:text-slate-600 font-medium">
+                    Deseleccionar
+                </button>
+            </div>
         </div>
     </div>
 </x-app-layout>

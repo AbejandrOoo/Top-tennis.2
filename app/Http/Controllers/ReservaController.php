@@ -14,7 +14,9 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class ReservaController extends Controller
@@ -301,12 +303,36 @@ class ReservaController extends Controller
             $horarios = Horario::reservables()
                 ->with(['cancha', 'tarifa'])
                 ->orderBy('hora_inicio')
-                ->get()
-                ->groupBy(fn ($h) => optional($h->hora_inicio)->format('Y-m-d'));
+                ->orderBy('cancha_id')
+                ->get();
+
+            $canchasMap = $horarios->pluck('cancha')->unique('id')->sortBy('id')
+                ->mapWithKeys(fn ($c) => [$c->id => [
+                    'id'     => $c->id,
+                    'nombre' => $c->nombre,
+                    'tipo'   => $c->tipo_superficie,
+                    'imagen' => $c->imagenUrl(),
+                ]]);
+
+            $horariosAgrupados = $horarios
+                ->groupBy(fn ($h) => $h->hora_inicio->format('Y-m-d'))
+                ->map(fn ($dayGroup) => $dayGroup
+                    ->groupBy('cancha_id')
+                    ->map(fn ($canchaGroup) => $canchaGroup->map(fn ($h) => [
+                        'id'     => $h->id,
+                        'hora'   => $h->hora_inicio->format('H:i'),
+                        'precio' => (float) ($h->tarifa?->precio ?? 0),
+                        'tarifa' => $h->tarifa?->nombre_tarifa ?? '',
+                    ])->values())
+                );
 
             $clientes = User::where('rol', Rol::Cliente)->orderBy('name')->get();
 
-            return view('reservas.crear-manual', compact('horarios', 'clientes'));
+            return view('reservas.crear-manual', [
+                'horariosJson' => $horariosAgrupados,
+                'canchasJson'  => $canchasMap,
+                'clientes'     => $clientes,
+            ]);
         } catch (\Throwable $e) {
             Log::error('Error al cargar formulario de reserva manual', ['error' => $e->getMessage()]);
             return redirect()->route('reservas.index')
@@ -319,15 +345,37 @@ class ReservaController extends Controller
      */
     public function storeManual(Request $request): RedirectResponse
     {
-        $validated = $request->validate([
-            'horario_id'   => ['required', 'exists:horarios,id'],
-            'user_id'      => ['required', 'exists:users,id'],
-            'metodo_pago'  => ['required', 'in:Yape,Efectivo'],
-            'numero_operacion' => ['nullable', 'string', 'max:50'],
-        ]);
+        $rules = [
+            'horario_id'        => ['required', 'exists:horarios,id'],
+            'metodo_pago'       => ['required', 'in:Yape,Efectivo'],
+            'numero_operacion'  => ['nullable', 'string', 'max:50'],
+            'modo_cliente'      => ['required', 'in:existente,nuevo'],
+        ];
+
+        if ($request->modo_cliente === 'nuevo') {
+            $rules['nuevo_nombre']   = ['required', 'string', 'max:255'];
+            $rules['nuevo_telefono'] = ['nullable', 'string', 'max:20'];
+        } else {
+            $rules['user_id'] = ['required', 'exists:users,id'];
+        }
+
+        $validated = $request->validate($rules);
 
         try {
             $reserva = DB::transaction(function () use ($validated) {
+                if ($validated['modo_cliente'] === 'nuevo') {
+                    $cliente = User::create([
+                        'name'     => $validated['nuevo_nombre'],
+                        'telefono' => $validated['nuevo_telefono'] ?? null,
+                        'email'    => 'cliente-' . Str::random(8) . '@toptennis.local',
+                        'password' => Hash::make(Str::random(16)),
+                        'rol'      => Rol::Cliente,
+                    ]);
+                    $userId = $cliente->id;
+                } else {
+                    $userId = $validated['user_id'];
+                }
+
                 $horario = Horario::with('tarifa')->findOrFail($validated['horario_id']);
 
                 if (! $horario->tarifa) {
@@ -345,10 +393,10 @@ class ReservaController extends Controller
                 $esYape = $validated['metodo_pago'] === 'Yape';
 
                 return Reserva::create([
-                    'user_id'           => $validated['user_id'],
+                    'user_id'           => $userId,
                     'horario_id'        => $horario->id,
                     'metodo_pago'       => $validated['metodo_pago'],
-                    'numero_operacion'  => $esYape ? $validated['numero_operacion'] : null,
+                    'numero_operacion'  => $esYape ? ($validated['numero_operacion'] ?? null) : null,
                     'estado_pago'       => Reserva::ESTADO_APROBADO,
                     'monto_pagado'      => $horario->tarifa->precio,
                     'expira_at'         => null,
@@ -357,7 +405,7 @@ class ReservaController extends Controller
             });
 
             return redirect()->route('reservas.index')
-                ->with('success', "Reserva manual {$reserva->codigo_validacion} creada correctamente.");
+                ->with('success', "Reserva {$reserva->codigo_validacion} creada correctamente.");
 
         } catch (\RuntimeException $e) {
             $msg = match ($e->getMessage()) {

@@ -6,11 +6,16 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+// MODELO RESERVA: REGISTRA CADA RESERVA DE UN CLIENTE SOBRE UN HORARIO
+// RELACIONES: PERTENECE A UN USER (N:1) Y A UN HORARIO (N:1)
+// ESTADOS DE PAGO: pendiente -> aprobado | anulada (NO-SHOW) | cancelado_por_mantenimiento
+// METODOS DE PAGO: Yape (APROBADO AUTOMATICO) O Efectivo (PENDIENTE HASTA CONFIRMAR)
+// GENERA TICKET CON CODIGO QR USANDO LA LIBRERIA bacon/bacon-qr-code
 class Reserva extends Model
 {
     use HasFactory, SoftDeletes;
 
-    // Minutos antes de la hora_inicio en que caduca una reserva en Efectivo no pagada
+    // CONSTANTE: MINUTOS ANTES DE LA HORA DE JUEGO EN QUE CADUCA UNA RESERVA EN EFECTIVO NO PAGADA
     public const MINUTOS_GRACIA = 30;
 
     public const ESTADO_PENDIENTE              = 'pendiente';
@@ -74,6 +79,9 @@ class Reserva extends Model
      * La usan tanto el command programado (reservas:liberar-vencidas) como
      * el modo "lazy" (al listar/confirmar), para que la regla se vea siempre.
      */
+    // LIBERACION AUTOMATICA DE NO-SHOWS: ANULA RESERVAS EN EFECTIVO VENCIDAS
+    // USA DB::TRANSACTION CON lockForUpdate PARA EVITAR RACE CONDITIONS
+    // SE LLAMA DESDE: 1) COMANDO ARTISAN (CRON) Y 2) MODO LAZY (AL CARGAR VISTAS)
     public static function liberarVencidas(): int
     {
         $liberadas = 0;
@@ -130,6 +138,9 @@ class Reserva extends Model
      * QR de la reserva como SVG (sin GD) con el logo (pelota) en el centro, B/N.
      * Nivel de corrección H (~30%) para que el logo no rompa el escaneo.
      */
+    // GENERACION DE QR: USA LA LIBRERIA bacon/bacon-qr-code (COMPOSER)
+    // RENDERIZA EN SVG (SIN NECESITAR LA EXTENSION GD DE PHP)
+    // NIVEL DE CORRECCION H (~30%) PARA QUE EL LOGO CENTRAL NO ROMPA EL ESCANEO
     public function qrSvg(int $tamano = 220): string
     {
         $renderer = new \BaconQrCode\Renderer\ImageRenderer(

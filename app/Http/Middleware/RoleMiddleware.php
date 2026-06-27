@@ -7,6 +7,9 @@ use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
+// MIDDLEWARE PERSONALIZADO: CONTROLA EL ACCESO POR ROL A LAS RUTAS
+// SE REGISTRA EN ROUTES COMO ->middleware('role:admin') O ->middleware('role:admin,recepcionista')
+// SI EL ROL DEL USUARIO NO ESTA EN LA LISTA, REDIRIGE AL DASHBOARD CON MENSAJE DE ERROR
 class RoleMiddleware
 {
     public function handle(Request $request, Closure $next, ...$roles): Response

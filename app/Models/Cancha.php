@@ -6,6 +6,10 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+// MODELO CANCHA: REPRESENTA UNA CANCHA FISICA DEL CLUB
+// USA SOFTDELETES PARA BORRADO LOGICO (NO SE ELIMINA DE LA BD, SE MARCA COMO ELIMINADA)
+// RELACION: UNA CANCHA TIENE MUCHOS HORARIOS (1:N)
+// ATRIBUTOS: nombre, tipo_superficie, imagen, modalidad, iluminacion, estado_mantenimiento
 class Cancha extends Model
 {
     use HasFactory, SoftDeletes;
@@ -58,6 +62,7 @@ class Cancha extends Model
         });
     }
 
+    // METODO DE CONSULTA: VERIFICA SI LA CANCHA ESTA DISPONIBLE PARA JUGAR
     public function estaOperativa(): bool
     {
         return $this->estado_mantenimiento === 'operativa';
@@ -67,6 +72,8 @@ class Cancha extends Model
      * Restaura automáticamente las canchas cuyo fin_mantenimiento ya pasó.
      * Llamar en modo "lazy" al inicio de disponibles() y canchas.index.
      */
+    // METODO ESTATICO "LAZY": SE EJECUTA AL CARGAR VISTAS PARA RESTAURAR
+    // AUTOMATICAMENTE CANCHAS CUYO PERIODO DE MANTENIMIENTO YA TERMINO
     public static function restaurarVencidas(): void
     {
         static::where('estado_mantenimiento', 'en_mantenimiento')

@@ -72,6 +72,7 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::patch('/horarios/{horario}',    [HorarioController::class, 'update'])->name('horarios.update');
     Route::delete('/horarios/{horario}',   [HorarioController::class, 'destroy'])->name('horarios.destroy');
     Route::delete('/horarios-dia',         [HorarioController::class, 'eliminarDia'])->name('horarios.eliminarDia');
+    Route::post('/horarios/cambiar-tarifa', [HorarioController::class, 'cambiarTarifaMasiva'])->name('horarios.cambiarTarifa');
 });
 
 // ===== Reservas (flujo cliente + ticket) =====

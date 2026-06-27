@@ -2,8 +2,11 @@
 
 namespace App\Enums;
 
+// ENUM DE ROLES: USAMOS ENUMS DE PHP 8.1 (BACKED ENUM) PARA TIPAR LOS ROLES
+// ESTO EVITA STRINGS SUELTOS Y DA AUTOCOMPLETADO EN EL IDE
+// EL VALOR STRING SE GUARDA EN LA COLUMNA 'rol' DE LA TABLA USERS
 enum Rol: string {
-    case Admin = 'admin';
-    case Recepcionista = 'recepcionista';
-    case Cliente = 'cliente';
+    case Admin = 'admin';              // ACCESO TOTAL: CRUD CANCHAS, TARIFAS, HORARIOS, RESERVAS
+    case Recepcionista = 'recepcionista'; // PUEDE CREAR RESERVAS MANUALES Y CONFIRMAR PAGOS
+    case Cliente = 'cliente';          // SOLO PUEDE RESERVAR Y VER SUS PROPIAS RESERVAS
 }
