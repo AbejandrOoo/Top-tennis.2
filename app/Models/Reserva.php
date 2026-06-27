@@ -2,12 +2,13 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Reserva extends Model
 {
-    use SoftDeletes;
+    use HasFactory, SoftDeletes;
 
     // Minutos antes de la hora_inicio en que caduca una reserva en Efectivo no pagada
     public const MINUTOS_GRACIA = 30;

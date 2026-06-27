@@ -125,8 +125,11 @@
         </p>
         <div class="flex flex-wrap gap-3 mb-10">
             @auth
-                <a href="{{ route('horarios.create') }}" class="btn-green">Hacer una reserva &rsaquo;</a>
-                <a href="{{ route('canchas.index') }}" class="btn-outline">Ver canchas</a>
+                @php $esStaff = in_array(auth()->user()->rol->value, ['Admin','Recepcionista']); @endphp
+                <a href="{{ $esStaff ? route('dashboard') : route('reservas.disponibles') }}" class="btn-green">
+                    {{ $esStaff ? 'Panel de administración' : 'Reservar ahora' }} &rsaquo;
+                </a>
+                <a href="{{ route('dashboard') }}" class="btn-outline">Mi Panel</a>
             @else
                 <a href="{{ route('register') }}" class="btn-green">Crear cuenta gratis &rsaquo;</a>
                 <a href="{{ route('login') }}" class="btn-outline">Ya tengo cuenta</a>
@@ -218,7 +221,8 @@
             </div>
         </div>
         @auth
-            <a href="{{ route('horarios.create') }}" class="btn-green text-base px-8 py-3">Comenzar ahora &rsaquo;</a>
+            @php $esStaff = $esStaff ?? in_array(auth()->user()->rol->value, ['Admin','Recepcionista']); @endphp
+            <a href="{{ $esStaff ? route('dashboard') : route('reservas.disponibles') }}" class="btn-green text-base px-8 py-3">Comenzar ahora &rsaquo;</a>
         @else
             <a href="{{ route('register') }}" class="btn-green text-base px-8 py-3">Comenzar ahora &rsaquo;</a>
         @endauth
@@ -240,7 +244,7 @@
                 </div>
                 <div class="p-4">
                     <p class="font-bold text-gray-900">Cancha Central</p>
-                    <p class="text-sm text-gray-400 mt-0.5">Singles · <a href="{{ route('tarifas.index') }}" class="text-green-600 hover:underline">ver tarifas</a></p>
+                    <p class="text-sm text-gray-400 mt-0.5">Singles · Superficie de arcilla</p>
                 </div>
             </div>
             <div class="court-card">
@@ -250,7 +254,7 @@
                 </div>
                 <div class="p-4">
                     <p class="font-bold text-gray-900">Cancha Norte</p>
-                    <p class="text-sm text-gray-400 mt-0.5">Dobles · <a href="{{ route('tarifas.index') }}" class="text-green-600 hover:underline">ver tarifas</a></p>
+                    <p class="text-sm text-gray-400 mt-0.5">Dobles · Superficie sintética</p>
                 </div>
             </div>
             <div class="court-card">
@@ -265,7 +269,14 @@
             </div>
         </div>
         <div class="text-center mt-8">
-            <a href="{{ route('canchas.index') }}" class="btn-outline inline-flex">Ver todas las canchas</a>
+            @auth
+                @php $esStaff = $esStaff ?? in_array(auth()->user()->rol->value, ['Admin','Recepcionista']); @endphp
+                <a href="{{ $esStaff ? route('canchas.index') : route('reservas.disponibles') }}" class="btn-outline inline-flex">
+                    {{ $esStaff ? 'Gestionar canchas' : 'Ver horarios disponibles' }}
+                </a>
+            @else
+                <a href="{{ route('login') }}" class="btn-outline inline-flex">Ver horarios disponibles</a>
+            @endauth
         </div>
     </div>
 </section>
@@ -278,8 +289,11 @@
         <p class="text-gray-500 mb-8">Regístrate gratis y reserva tu primera cancha en menos de 2 minutos</p>
         <div class="flex flex-wrap justify-center gap-3">
             @auth
-                <a href="{{ route('horarios.create') }}" class="btn-green text-base">Hacer una reserva &rsaquo;</a>
-                <a href="{{ route('dashboard') }}" class="btn-outline text-base">Ir al Panel</a>
+                @php $esStaff = $esStaff ?? in_array(auth()->user()->rol->value, ['Admin','Recepcionista']); @endphp
+                <a href="{{ $esStaff ? route('dashboard') : route('reservas.disponibles') }}" class="btn-green text-base">
+                    {{ $esStaff ? 'Panel de administración' : 'Reservar ahora' }} &rsaquo;
+                </a>
+                <a href="{{ route('dashboard') }}" class="btn-outline text-base">Mi Panel</a>
             @else
                 <a href="{{ route('register') }}" class="btn-green text-base">Registrarme gratis &rsaquo;</a>
                 <a href="{{ route('login') }}" class="btn-outline text-base">Iniciar Sesión</a>
