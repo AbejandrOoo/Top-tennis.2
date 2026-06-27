@@ -47,10 +47,10 @@
                     @forelse($reservas as $reserva)
                         <tr>
                             <td class="px-5 py-3 font-bold text-green-700">{{ $reserva->codigo_validacion }}</td>
-                            @if($esStaff)<td class="px-5 py-3 text-gray-700">{{ $reserva->user->name ?? '—' }}</td>@endif
-                            <td class="px-5 py-3 text-gray-700">{{ $reserva->horario->cancha->nombre ?? '—' }}</td>
+                            @if($esStaff)<td class="px-5 py-3 text-gray-700">{{ $reserva->user?->name ?? '—' }}</td>@endif
+                            <td class="px-5 py-3 text-gray-700">{{ $reserva->horario?->cancha?->nombre ?? '—' }}</td>
                             <td class="px-5 py-3 text-gray-600">
-                                {{ optional($reserva->horario->hora_inicio)->format('d/m/Y H:i') }}
+                                {{ optional($reserva->horario?->hora_inicio)->format('d/m/Y H:i') ?? '—' }}
                             </td>
                             <td class="px-5 py-3 text-gray-600">{{ $reserva->metodo_pago }}</td>
                             <td class="px-5 py-3">

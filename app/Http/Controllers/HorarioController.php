@@ -14,21 +14,31 @@ use Illuminate\View\View;
 
 class HorarioController extends Controller
 {
-    public function index(): View
+    public function index(): View|RedirectResponse
     {
-        $horarios = Horario::with(['cancha', 'tarifa', 'reserva'])
-            ->orderByDesc('hora_inicio')
-            ->paginate(15);
-
-        return view('horarios.index', compact('horarios'));
+        try {
+            $horarios = Horario::with(['cancha', 'tarifa', 'reserva'])
+                ->orderByDesc('hora_inicio')
+                ->paginate(15);
+            return view('horarios.index', compact('horarios'));
+        } catch (\Throwable $e) {
+            Log::error('Error al listar horarios', ['error' => $e->getMessage()]);
+            return redirect()->route('dashboard')
+                ->withErrors(['general' => 'No se pudieron cargar los horarios. Intenta de nuevo.']);
+        }
     }
 
-    public function create(): View
+    public function create(): View|RedirectResponse
     {
-        $canchas = Cancha::where('estado_mantenimiento', 'operativa')->orderBy('nombre')->get();
-        $tarifas = Tarifa::orderBy('nombre_tarifa')->get();
-
-        return view('horarios.create', compact('canchas', 'tarifas'));
+        try {
+            $canchas = Cancha::where('estado_mantenimiento', 'operativa')->orderBy('nombre')->get();
+            $tarifas = Tarifa::orderBy('nombre_tarifa')->get();
+            return view('horarios.create', compact('canchas', 'tarifas'));
+        } catch (\Throwable $e) {
+            Log::error('Error al mostrar formulario de horario', ['error' => $e->getMessage()]);
+            return redirect()->route('horarios.index')
+                ->withErrors(['general' => 'No se pudo cargar el formulario. Intenta de nuevo.']);
+        }
     }
 
     public function store(StoreHorarioRequest $request): RedirectResponse
@@ -58,15 +68,22 @@ class HorarioController extends Controller
 
     public function edit(Horario $horario): View|RedirectResponse
     {
-        if ($horario->estado === 'reservado') {
+        try {
+            if ($horario->estado === 'reservado') {
+                return redirect()->route('horarios.index')
+                    ->withErrors(['general' => 'No se puede editar un horario que ya está reservado.']);
+            }
+
+            $canchas = Cancha::where('estado_mantenimiento', 'operativa')->orderBy('nombre')->get();
+            $tarifas = Tarifa::orderBy('nombre_tarifa')->get();
+
+            return view('horarios.edit', compact('horario', 'canchas', 'tarifas'));
+
+        } catch (\Throwable $e) {
+            Log::error('Error al mostrar edición de horario', ['horario_id' => $horario->id, 'error' => $e->getMessage()]);
             return redirect()->route('horarios.index')
-                ->withErrors(['general' => 'No se puede editar un horario que ya está reservado.']);
+                ->withErrors(['general' => 'No se pudo cargar el formulario de edición. Intenta de nuevo.']);
         }
-
-        $canchas = Cancha::where('estado_mantenimiento', 'operativa')->orderBy('nombre')->get();
-        $tarifas = Tarifa::orderBy('nombre_tarifa')->get();
-
-        return view('horarios.edit', compact('horario', 'canchas', 'tarifas'));
     }
 
     public function update(UpdateHorarioRequest $request, Horario $horario): RedirectResponse

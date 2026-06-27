@@ -15,18 +15,18 @@
             <h2 class="text-sm font-bold text-green-700 uppercase tracking-wide mb-4">Detalle de tu reserva</h2>
             <div class="grid grid-cols-2 gap-y-3 text-sm">
                 <span class="text-gray-500">Cliente</span>
-                <span class="font-semibold text-gray-800 text-right">{{ auth()->user()->name }}</span>
+                <span class="font-semibold text-gray-800 text-right">{{ auth()->user()?->name ?? '—' }}</span>
                 <span class="text-gray-500">Cancha</span>
-                <span class="font-semibold text-gray-800 text-right">{{ $horario->cancha->nombre }}</span>
+                <span class="font-semibold text-gray-800 text-right">{{ $horario->cancha?->nombre ?? '—' }}</span>
                 <span class="text-gray-500">Tarifa</span>
-                <span class="font-semibold text-gray-800 text-right">{{ $horario->tarifa->nombre_tarifa }}</span>
+                <span class="font-semibold text-gray-800 text-right">{{ $horario->tarifa?->nombre_tarifa ?? '—' }}</span>
                 <span class="text-gray-500">Fecha y hora</span>
                 <span class="font-semibold text-gray-800 text-right">
-                    {{ $horario->hora_inicio->format('d/m/Y') }} · {{ $horario->hora_inicio->format('H:i') }}–{{ $horario->hora_fin->format('H:i') }}
+                    {{ optional($horario->hora_inicio)->format('d/m/Y') ?? '—' }} · {{ optional($horario->hora_inicio)->format('H:i') ?? '—' }}–{{ optional($horario->hora_fin)->format('H:i') ?? '—' }}
                 </span>
                 <span class="text-gray-500 pt-3 border-t mt-1">Monto a pagar</span>
                 <span class="text-green-700 font-extrabold text-lg text-right pt-3 border-t mt-1">
-                    S/ {{ number_format($horario->tarifa->precio, 2) }}
+                    S/ {{ number_format($horario->tarifa?->precio ?? 0, 2) }}
                 </span>
             </div>
         </div>
@@ -66,7 +66,7 @@
                 <img src="{{ asset('images/yape.png') }}" alt="QR Yape/Plin"
                      class="mx-auto w-56 h-56 object-contain rounded-xl border border-gray-200 bg-white">
                 <div class="mt-4 inline-block bg-green-600 text-white font-extrabold px-5 py-2 rounded-full">
-                    Monto a Yapear: S/ {{ number_format($horario->tarifa->precio, 2) }}
+                    Monto a Yapear: S/ {{ number_format($horario->tarifa?->precio ?? 0, 2) }}
                 </div>
                 <div class="mt-6 text-left">
                     <label for="numero_operacion" class="form-label">Número de operación</label>
@@ -83,7 +83,7 @@
                     <span class="text-xl">⚠</span>
                     <p class="text-sm text-yellow-800">
                         Tu reserva quedará <strong>confirmada con pago pendiente</strong>.
-                        Paga <strong>S/ {{ number_format($horario->tarifa->precio, 2) }}</strong> en recepción presentando tu ticket.
+                        Paga <strong>S/ {{ number_format($horario->tarifa?->precio ?? 0, 2) }}</strong> en recepción presentando tu ticket.
                     </p>
                 </div>
             </div>

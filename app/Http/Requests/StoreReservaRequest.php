@@ -37,6 +37,7 @@ class StoreReservaRequest extends FormRequest
             $horario = Horario::with('cancha')->find($this->horario_id);
 
             if (! $horario) {
+                $validator->errors()->add('horario_id', 'El horario indicado no existe o fue eliminado.');
                 return;
             }
 

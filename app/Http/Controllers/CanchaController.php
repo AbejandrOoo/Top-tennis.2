@@ -12,16 +12,27 @@ use Illuminate\View\View;
 
 class CanchaController extends Controller
 {
-    public function index(): View
+    public function index(): View|RedirectResponse
     {
-        $canchas = Cancha::withCount('horarios')->latest()->paginate(10);
-
-        return view('canchas.index', compact('canchas'));
+        try {
+            $canchas = Cancha::withCount('horarios')->latest()->paginate(10);
+            return view('canchas.index', compact('canchas'));
+        } catch (\Throwable $e) {
+            Log::error('Error al listar canchas', ['error' => $e->getMessage()]);
+            return redirect()->route('dashboard')
+                ->withErrors(['general' => 'No se pudieron cargar las canchas. Intenta de nuevo.']);
+        }
     }
 
-    public function create(): View
+    public function create(): View|RedirectResponse
     {
-        return view('canchas.create');
+        try {
+            return view('canchas.create');
+        } catch (\Throwable $e) {
+            Log::error('Error al mostrar formulario de cancha', ['error' => $e->getMessage()]);
+            return redirect()->route('canchas.index')
+                ->withErrors(['general' => 'No se pudo cargar el formulario. Intenta de nuevo.']);
+        }
     }
 
     public function store(StoreCanchaRequest $request): RedirectResponse
@@ -46,9 +57,15 @@ class CanchaController extends Controller
         }
     }
 
-    public function edit(Cancha $cancha): View
+    public function edit(Cancha $cancha): View|RedirectResponse
     {
-        return view('canchas.edit', compact('cancha'));
+        try {
+            return view('canchas.edit', compact('cancha'));
+        } catch (\Throwable $e) {
+            Log::error('Error al mostrar edición de cancha', ['cancha_id' => $cancha->id, 'error' => $e->getMessage()]);
+            return redirect()->route('canchas.index')
+                ->withErrors(['general' => 'No se pudo cargar el formulario de edición. Intenta de nuevo.']);
+        }
     }
 
     public function update(UpdateCanchaRequest $request, Cancha $cancha): RedirectResponse

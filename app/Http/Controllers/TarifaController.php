@@ -12,16 +12,27 @@ use Illuminate\View\View;
 
 class TarifaController extends Controller
 {
-    public function index(): View
+    public function index(): View|RedirectResponse
     {
-        $tarifas = Tarifa::withCount('horarios')->latest()->paginate(10);
-
-        return view('tarifas.index', compact('tarifas'));
+        try {
+            $tarifas = Tarifa::withCount('horarios')->latest()->paginate(10);
+            return view('tarifas.index', compact('tarifas'));
+        } catch (\Throwable $e) {
+            Log::error('Error al listar tarifas', ['error' => $e->getMessage()]);
+            return redirect()->route('dashboard')
+                ->withErrors(['general' => 'No se pudieron cargar las tarifas. Intenta de nuevo.']);
+        }
     }
 
-    public function create(): View
+    public function create(): View|RedirectResponse
     {
-        return view('tarifas.create');
+        try {
+            return view('tarifas.create');
+        } catch (\Throwable $e) {
+            Log::error('Error al mostrar formulario de tarifa', ['error' => $e->getMessage()]);
+            return redirect()->route('tarifas.index')
+                ->withErrors(['general' => 'No se pudo cargar el formulario. Intenta de nuevo.']);
+        }
     }
 
     public function store(StoreTarifaRequest $request): RedirectResponse
@@ -46,9 +57,15 @@ class TarifaController extends Controller
         }
     }
 
-    public function edit(Tarifa $tarifa): View
+    public function edit(Tarifa $tarifa): View|RedirectResponse
     {
-        return view('tarifas.edit', compact('tarifa'));
+        try {
+            return view('tarifas.edit', compact('tarifa'));
+        } catch (\Throwable $e) {
+            Log::error('Error al mostrar edición de tarifa', ['tarifa_id' => $tarifa->id, 'error' => $e->getMessage()]);
+            return redirect()->route('tarifas.index')
+                ->withErrors(['general' => 'No se pudo cargar el formulario de edición. Intenta de nuevo.']);
+        }
     }
 
     public function update(UpdateTarifaRequest $request, Tarifa $tarifa): RedirectResponse

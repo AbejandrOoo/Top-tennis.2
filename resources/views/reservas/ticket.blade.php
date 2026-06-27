@@ -61,10 +61,10 @@
 
             <div class="px-7 pb-6 text-sm">
                 @foreach([
-                    ['Cliente', $reserva->user->name ?? '—'],
-                    ['Cancha', $reserva->horario->cancha->nombre ?? '—'],
-                    ['Fecha', $reserva->horario->hora_inicio->format('d/m/Y')],
-                    ['Horario', $reserva->horario->hora_inicio->format('H:i').' – '.$reserva->horario->hora_fin->format('H:i')],
+                    ['Cliente', $reserva->user?->name ?? '—'],
+                    ['Cancha', $reserva->horario?->cancha?->nombre ?? '—'],
+                    ['Fecha', optional($reserva->horario?->hora_inicio)->format('d/m/Y') ?? '—'],
+                    ['Horario', (optional($reserva->horario?->hora_inicio)->format('H:i') ?? '—').' – '.(optional($reserva->horario?->hora_fin)->format('H:i') ?? '—')],
                     ['Método de pago', $reserva->metodo_pago],
                 ] as [$k, $v])
                     <div class="flex justify-between py-2 border-t border-gray-100">

@@ -20,47 +20,61 @@ class ReservaController extends Controller
     /**
      * Listado de horarios disponibles para que el cliente reserve.
      */
-    public function disponibles(): View
+    public function disponibles(): View|RedirectResponse
     {
-        // Modo lazy: libera no-shows en Efectivo vencidos antes de listar,
-        // así los slots reaparecen aunque el scheduler no esté corriendo.
-        Reserva::liberarVencidas();
+        try {
+            // Modo lazy: libera no-shows en Efectivo vencidos antes de listar,
+            // así los slots reaparecen aunque el scheduler no esté corriendo.
+            Reserva::liberarVencidas();
 
-        $horarios = Horario::reservables()
-            ->with(['cancha', 'tarifa'])
-            ->orderBy('hora_inicio')
-            ->get();
+            $horarios = Horario::reservables()
+                ->with(['cancha', 'tarifa'])
+                ->orderBy('hora_inicio')
+                ->get();
 
-        return view('reservas.disponibles', compact('horarios'));
+            return view('reservas.disponibles', compact('horarios'));
+
+        } catch (\Throwable $e) {
+            Log::error('Error al listar horarios disponibles', ['error' => $e->getMessage()]);
+            return redirect()->route('dashboard')
+                ->withErrors(['general' => 'No se pudieron cargar los horarios disponibles. Intenta de nuevo.']);
+        }
     }
 
     /**
      * Listado de reservas: admin/recepción ven todas (con filtro y total);
      * el cliente ve solo las suyas.
      */
-    public function index(Request $request): View
+    public function index(Request $request): View|RedirectResponse
     {
-        $user    = auth()->user();
-        $esStaff = in_array($user->rol, [Rol::Admin, Rol::Recepcionista]);
+        try {
+            $user    = auth()->user();
+            $esStaff = in_array($user->rol, [Rol::Admin, Rol::Recepcionista]);
 
-        $query = Reserva::with(['horario.cancha', 'horario.tarifa', 'user'])->latest();
+            $query = Reserva::with(['horario.cancha', 'horario.tarifa', 'user'])->latest();
 
-        if (! $esStaff) {
-            $query->where('user_id', $user->id);
+            if (! $esStaff) {
+                $query->where('user_id', $user->id);
+            }
+
+            // Filtro por método de pago (dashboard financiero del admin)
+            if ($esStaff && in_array($request->metodo_pago, ['Yape', 'Efectivo'])) {
+                $query->where('metodo_pago', $request->metodo_pago);
+            }
+
+            $reservas = $query->get();
+
+            $totalIngresos = $esStaff
+                ? $reservas->where('estado_pago', 'aprobado')->sum('monto_pagado')
+                : 0;
+
+            return view('reservas.index', compact('reservas', 'totalIngresos', 'esStaff'));
+
+        } catch (\Throwable $e) {
+            Log::error('Error al listar reservas', ['error' => $e->getMessage()]);
+            return redirect()->route('dashboard')
+                ->withErrors(['general' => 'No se pudieron cargar las reservas. Intenta de nuevo.']);
         }
-
-        // Filtro por método de pago (dashboard financiero del admin)
-        if ($esStaff && in_array($request->metodo_pago, ['Yape', 'Efectivo'])) {
-            $query->where('metodo_pago', $request->metodo_pago);
-        }
-
-        $reservas = $query->get();
-
-        $totalIngresos = $esStaff
-            ? $reservas->where('estado_pago', 'aprobado')->sum('monto_pagado')
-            : 0;
-
-        return view('reservas.index', compact('reservas', 'totalIngresos', 'esStaff'));
     }
 
     /**
@@ -68,17 +82,30 @@ class ReservaController extends Controller
      */
     public function confirmar(Horario $horario): View|RedirectResponse
     {
-        // Modo lazy: por si este slot fue liberado por un no-show recién vencido.
-        Reserva::liberarVencidas();
+        try {
+            // Modo lazy: por si este slot fue liberado por un no-show recién vencido.
+            Reserva::liberarVencidas();
 
-        $horario->refresh()->load(['cancha', 'tarifa']);
+            $horario->refresh()->load(['cancha', 'tarifa']);
 
-        if ($horario->estado !== 'disponible' || $horario->hora_inicio->isPast() || ! $horario->cancha->estaOperativa()) {
+            // Null-check explícito de cancha antes de llamar estaOperativa(),
+            // por si la cancha fue soft-deleted entre la carga y este punto.
+            if ($horario->estado !== 'disponible'
+                || ! $horario->hora_inicio
+                || $horario->hora_inicio->isPast()
+                || ! $horario->cancha
+                || ! $horario->cancha->estaOperativa()) {
+                return redirect()->route('reservas.disponibles')
+                    ->withErrors(['general' => 'Ese horario ya no está disponible para reservar.']);
+            }
+
+            return view('reservas.confirmar', compact('horario'));
+
+        } catch (\Throwable $e) {
+            Log::error('Error al mostrar confirmación de horario', ['horario_id' => $horario->id, 'error' => $e->getMessage()]);
             return redirect()->route('reservas.disponibles')
-                ->withErrors(['general' => 'Ese horario ya no está disponible para reservar.']);
+                ->withErrors(['general' => 'No se pudo cargar el formulario de reserva. Intenta de nuevo.']);
         }
-
-        return view('reservas.confirmar', compact('horario'));
     }
 
     /**
@@ -88,8 +115,14 @@ class ReservaController extends Controller
     {
         try {
             $reserva = DB::transaction(function () use ($request) {
-                $esYape   = $request->metodo_pago === 'Yape';
-                $horario  = Horario::findOrFail($request->horario_id);
+                $esYape  = $request->metodo_pago === 'Yape';
+                // Cargar tarifa en la misma query para detectar si fue eliminada
+                // antes de intentar leer su precio (evita null dereference en monto_pagado).
+                $horario = Horario::with('tarifa')->findOrFail($request->horario_id);
+
+                if (! $horario->tarifa) {
+                    throw new \RuntimeException('tarifa_no_disponible');
+                }
 
                 // Capa 2 anti-race: update atómico condicional. Si afecta 0 filas,
                 // otro usuario tomó el horario primero → abortamos.
@@ -119,8 +152,12 @@ class ReservaController extends Controller
                 ->with('success', '¡Reserva confirmada! Aquí está tu ticket digital.');
 
         } catch (\RuntimeException $e) {
-            return back()->withInput()
-                ->withErrors(['general' => 'Ese horario acaba de ser reservado por otra persona. Elige otro.']);
+            $mensaje = match ($e->getMessage()) {
+                'horario_no_disponible' => 'Ese horario acaba de ser reservado por otra persona. Elige otro.',
+                'tarifa_no_disponible'  => 'La tarifa de ese horario fue eliminada. Contacta al administrador.',
+                default                 => 'No se pudo procesar la reserva. Intenta de nuevo.',
+            };
+            return back()->withInput()->withErrors(['general' => $mensaje]);
 
         } catch (QueryException $e) {
             Log::error('Error de BD al crear reserva', ['error' => $e->getMessage()]);

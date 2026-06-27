@@ -114,7 +114,7 @@ class Reserva extends Model
             'TOP TENNIS - TICKET DE RESERVA',
             'Codigo: '   . $this->codigo_validacion,
             'Cliente: '  . ($this->user->name ?? '-'),
-            'Cancha: '   . ($h->cancha->nombre ?? '-'),
+            'Cancha: '   . (optional($h->cancha)->nombre ?? '-'),
             'Fecha: '    . optional($h->hora_inicio)->format('d/m/Y'),
             'Horario: '  . optional($h->hora_inicio)->format('H:i') . ' - ' . optional($h->hora_fin)->format('H:i'),
             'Monto: S/ ' . number_format((float) $this->monto_pagado, 2),

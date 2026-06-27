@@ -21,16 +21,16 @@
                 @foreach($horarios as $horario)
                     <div class="card p-5 flex flex-col">
                         <div class="flex items-center justify-between mb-2">
-                            <p class="font-bold text-gray-900">{{ $horario->cancha->nombre }}</p>
+                            <p class="font-bold text-gray-900">{{ $horario->cancha?->nombre ?? '—' }}</p>
                             <span class="badge badge-green">Disponible</span>
                         </div>
-                        <p class="text-sm text-gray-500">{{ $horario->cancha->tipo_superficie }} · {{ $horario->tarifa->nombre_tarifa }}</p>
+                        <p class="text-sm text-gray-500">{{ $horario->cancha?->tipo_superficie ?? '—' }} · {{ $horario->tarifa?->nombre_tarifa ?? '—' }}</p>
                         <p class="text-sm text-gray-700 mt-2 font-medium">
-                            📅 {{ $horario->hora_inicio->format('d/m/Y') }}
-                            · 🕐 {{ $horario->hora_inicio->format('H:i') }} – {{ $horario->hora_fin->format('H:i') }}
+                            📅 {{ optional($horario->hora_inicio)->format('d/m/Y') ?? '—' }}
+                            · 🕐 {{ optional($horario->hora_inicio)->format('H:i') ?? '—' }} – {{ optional($horario->hora_fin)->format('H:i') ?? '—' }}
                         </p>
                         <div class="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
-                            <span class="text-green-700 font-extrabold text-lg">S/ {{ number_format($horario->tarifa->precio, 2) }}</span>
+                            <span class="text-green-700 font-extrabold text-lg">S/ {{ number_format($horario->tarifa?->precio ?? 0, 2) }}</span>
                             <a href="{{ route('reservas.confirmar', $horario) }}" class="btn-primary">Reservar</a>
                         </div>
                     </div>
