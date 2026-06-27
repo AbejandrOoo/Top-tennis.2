@@ -71,6 +71,7 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/horarios/{horario}/edit', [HorarioController::class, 'edit'])->name('horarios.edit');
     Route::patch('/horarios/{horario}',    [HorarioController::class, 'update'])->name('horarios.update');
     Route::delete('/horarios/{horario}',   [HorarioController::class, 'destroy'])->name('horarios.destroy');
+    Route::delete('/horarios-dia',         [HorarioController::class, 'eliminarDia'])->name('horarios.eliminarDia');
 });
 
 // ===== Reservas (flujo cliente + ticket) =====
@@ -79,10 +80,16 @@ Route::middleware('auth')->group(function () {
     Route::get('/reservas',                        [ReservaController::class, 'index'])->name('reservas.index');
     Route::get('/reservar/{horario}/confirmar',    [ReservaController::class, 'confirmar'])->name('reservas.confirmar');
     Route::post('/reservas',                       [ReservaController::class, 'store'])->name('reservas.store');
+
+    // Reserva manual (admin/recepción) — DEBE ir antes de {reserva} routes
+    Route::get('/reservas/crear-manual', [ReservaController::class, 'crearManual'])
+        ->middleware('role:admin,recepcionista')->name('reservas.crearManual');
+    Route::post('/reservas/manual', [ReservaController::class, 'storeManual'])
+        ->middleware('role:admin,recepcionista')->name('reservas.storeManual');
+
     Route::get('/reservas/{reserva}/ticket',       [ReservaController::class, 'ticket'])->name('reservas.ticket');
     Route::get('/reservas/{reserva}/ticket/pdf',   [ReservaController::class, 'descargarTicket'])->name('reservas.ticket.pdf');
     Route::delete('/reservas/{reserva}',           [ReservaController::class, 'cancelar'])->name('reservas.cancelar');
-    // Recepción confirma un pago en efectivo
     Route::patch('/reservas/{reserva}/confirmar-pago', [ReservaController::class, 'confirmarPago'])
         ->middleware('role:admin,recepcionista')->name('reservas.confirmarPago');
 });

@@ -136,9 +136,10 @@ class CanchaController extends Controller
                 }
 
                 $cancha->update([
-                    'estado_mantenimiento' => 'en_mantenimiento',
-                    'motivo_mantenimiento' => $validated['motivo_mantenimiento'],
-                    'fin_mantenimiento'    => $validated['fin_mantenimiento'],
+                    'estado_mantenimiento'  => 'en_mantenimiento',
+                    'motivo_mantenimiento'  => $validated['motivo_mantenimiento'],
+                    'inicio_mantenimiento'  => now(),
+                    'fin_mantenimiento'     => $validated['fin_mantenimiento'],
                 ]);
             });
 
@@ -162,9 +163,10 @@ class CanchaController extends Controller
     {
         try {
             $cancha->update([
-                'estado_mantenimiento' => 'operativa',
-                'motivo_mantenimiento' => null,
-                'fin_mantenimiento'    => null,
+                'estado_mantenimiento'  => 'operativa',
+                'motivo_mantenimiento'  => null,
+                'inicio_mantenimiento'  => null,
+                'fin_mantenimiento'     => null,
             ]);
 
             return redirect()->route('canchas.index')

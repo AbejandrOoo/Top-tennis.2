@@ -7,6 +7,7 @@ use App\Http\Requests\StoreReservaRequest;
 use App\Models\Cancha;
 use App\Models\Horario;
 use App\Models\Reserva;
+use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
@@ -286,6 +287,88 @@ class ReservaController extends Controller
             Log::error('Error al confirmar pago en efectivo', ['reserva_id' => $reserva->id, 'error' => $e->getMessage()]);
 
             return back()->withErrors(['general' => 'No se pudo confirmar el pago. Intenta de nuevo.']);
+        }
+    }
+
+    /**
+     * Formulario para que admin/recepción cree una reserva manual.
+     */
+    public function crearManual(): View|RedirectResponse
+    {
+        try {
+            Reserva::liberarVencidas();
+
+            $horarios = Horario::reservables()
+                ->with(['cancha', 'tarifa'])
+                ->orderBy('hora_inicio')
+                ->get()
+                ->groupBy(fn ($h) => optional($h->hora_inicio)->format('Y-m-d'));
+
+            $clientes = User::where('rol', Rol::Cliente)->orderBy('name')->get();
+
+            return view('reservas.crear-manual', compact('horarios', 'clientes'));
+        } catch (\Throwable $e) {
+            Log::error('Error al cargar formulario de reserva manual', ['error' => $e->getMessage()]);
+            return redirect()->route('reservas.index')
+                ->withErrors(['general' => 'No se pudo cargar el formulario.']);
+        }
+    }
+
+    /**
+     * Procesa una reserva manual creada por admin/recepción.
+     */
+    public function storeManual(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'horario_id'   => ['required', 'exists:horarios,id'],
+            'user_id'      => ['required', 'exists:users,id'],
+            'metodo_pago'  => ['required', 'in:Yape,Efectivo'],
+            'numero_operacion' => ['nullable', 'string', 'max:50'],
+        ]);
+
+        try {
+            $reserva = DB::transaction(function () use ($validated) {
+                $horario = Horario::with('tarifa')->findOrFail($validated['horario_id']);
+
+                if (! $horario->tarifa) {
+                    throw new \RuntimeException('tarifa_no_disponible');
+                }
+
+                $tomado = Horario::where('id', $horario->id)
+                    ->where('estado', 'disponible')
+                    ->update(['estado' => 'reservado']);
+
+                if ($tomado === 0) {
+                    throw new \RuntimeException('horario_no_disponible');
+                }
+
+                $esYape = $validated['metodo_pago'] === 'Yape';
+
+                return Reserva::create([
+                    'user_id'           => $validated['user_id'],
+                    'horario_id'        => $horario->id,
+                    'metodo_pago'       => $validated['metodo_pago'],
+                    'numero_operacion'  => $esYape ? $validated['numero_operacion'] : null,
+                    'estado_pago'       => Reserva::ESTADO_APROBADO,
+                    'monto_pagado'      => $horario->tarifa->precio,
+                    'expira_at'         => null,
+                    'codigo_validacion' => Reserva::generarCodigoValidacion(),
+                ]);
+            });
+
+            return redirect()->route('reservas.index')
+                ->with('success', "Reserva manual {$reserva->codigo_validacion} creada correctamente.");
+
+        } catch (\RuntimeException $e) {
+            $msg = match ($e->getMessage()) {
+                'horario_no_disponible' => 'Ese horario ya fue reservado.',
+                'tarifa_no_disponible'  => 'La tarifa de ese horario fue eliminada.',
+                default                 => 'No se pudo procesar la reserva.',
+            };
+            return back()->withInput()->withErrors(['general' => $msg]);
+        } catch (\Throwable $e) {
+            Log::error('Error al crear reserva manual', ['error' => $e->getMessage()]);
+            return back()->withInput()->withErrors(['general' => 'Error al crear la reserva.']);
         }
     }
 

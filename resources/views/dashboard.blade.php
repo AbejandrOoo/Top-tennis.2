@@ -3,7 +3,7 @@
         <div class="flex items-center justify-between">
             <div>
                 <p class="text-green-300 text-xs font-semibold uppercase tracking-widest mb-0.5">
-                    {{ now()->format('l, d \d\e F') }}
+                    {{ now()->locale('es')->isoFormat('dddd, D [de] MMMM') }}
                 </p>
                 <h1 class="text-2xl font-black text-white leading-tight">
                     Hola, {{ explode(' ', Auth::user()->name)[0] }} 👋
@@ -148,8 +148,8 @@
                         </svg>
                     </div>
                     <p class="text-3xl font-black text-green-700 leading-none">{{ $stats['disponibles'] }}</p>
-                    <p class="text-sm font-semibold text-gray-700 mt-1.5">Canchas disponibles</p>
-                    <p class="text-xs text-gray-400 mt-0.5">horarios para reservar hoy</p>
+                    <p class="text-sm font-semibold text-gray-700 mt-1.5">Horarios disponibles</p>
+                    <p class="text-xs text-gray-400 mt-0.5">slots para reservar</p>
                 </div>
                 <div class="stat-card">
                     <div class="w-10 h-10 rounded-xl flex items-center justify-center mb-3"

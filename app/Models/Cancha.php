@@ -18,12 +18,14 @@ class Cancha extends Model
         'iluminacion',
         'estado_mantenimiento',
         'motivo_mantenimiento',
+        'inicio_mantenimiento',
         'fin_mantenimiento',
     ];
 
     protected $casts = [
-        'iluminacion'       => 'boolean',
-        'fin_mantenimiento' => 'datetime',
+        'iluminacion'          => 'boolean',
+        'inicio_mantenimiento' => 'datetime',
+        'fin_mantenimiento'    => 'datetime',
     ];
 
     public const IMAGENES = [
@@ -71,9 +73,10 @@ class Cancha extends Model
             ->whereNotNull('fin_mantenimiento')
             ->where('fin_mantenimiento', '<=', now())
             ->update([
-                'estado_mantenimiento' => 'operativa',
-                'motivo_mantenimiento' => null,
-                'fin_mantenimiento'    => null,
+                'estado_mantenimiento'  => 'operativa',
+                'motivo_mantenimiento'  => null,
+                'inicio_mantenimiento'  => null,
+                'fin_mantenimiento'     => null,
             ]);
     }
 }

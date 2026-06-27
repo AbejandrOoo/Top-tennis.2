@@ -47,9 +47,9 @@
 
                     @foreach($links as $link)
                         <a href="{{ route($link['route']) }}"
-                           class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold transition-all duration-150
+                           class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-sm font-semibold transition-colors duration-200
                                {{ request()->routeIs($link['pattern'])
-                                   ? 'bg-white/15 text-white'
+                                   ? 'bg-white text-emerald-900 shadow-sm'
                                    : 'text-green-200 hover:text-white hover:bg-white/10' }}">
                             {!! $link['icon'] !!}
                             {{ $link['label'] }}
@@ -134,9 +134,9 @@
         <div class="px-4 pt-2 pb-3 space-y-0.5">
             @foreach($links as $link)
                 <a href="{{ route($link['route']) }}"
-                   class="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-semibold
+                   class="flex items-center gap-2 px-3 py-2.5 rounded-full text-sm font-semibold transition-colors duration-200
                        {{ request()->routeIs($link['pattern'])
-                           ? 'bg-white/15 text-white'
+                           ? 'bg-white text-emerald-900'
                            : 'text-green-200 hover:text-white hover:bg-white/10' }}">
                     {!! $link['icon'] !!} {{ $link['label'] }}
                 </a>

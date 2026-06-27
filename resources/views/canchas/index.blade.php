@@ -177,6 +177,11 @@
                                     @else
                                         <div>
                                             <span class="badge badge-yellow">Mantenimiento</span>
+                                            @if($cancha->inicio_mantenimiento)
+                                                <p class="text-xs text-amber-600 mt-0.5">
+                                                    Desde {{ $cancha->inicio_mantenimiento->format('d/m/Y H:i') }}
+                                                </p>
+                                            @endif
                                             @if($cancha->fin_mantenimiento)
                                                 <p class="text-xs text-amber-600 mt-0.5">
                                                     Hasta {{ $cancha->fin_mantenimiento->format('d/m/Y H:i') }}
