@@ -31,12 +31,14 @@ class RoleMiddleware
 
         // Mensaje específico según el rol del usuario
         $mensajes = [
-            Rol::Cliente->value => 'Esta sección es exclusiva para el personal del club. Como cliente, puedes acceder a reservas y consultar tarifas.',
+            Rol::Cliente->value       => 'Acceso denegado. Esa sección es exclusiva para el personal del club.',
+            Rol::Recepcionista->value => 'Acceso denegado. Solo el administrador puede acceder a esa sección.',
         ];
 
         $mensaje = $mensajes[$user->rol->value]
-            ?? 'No tienes permisos suficientes para acceder a esta sección.';
+            ?? 'No tienes permisos suficientes para acceder a esa sección.';
 
-        abort(403, $mensaje);
+        // Redirigir al dashboard con flash de error (nunca mostrar pantalla naranja)
+        return redirect()->route('dashboard')->with('error', $mensaje);
     }
 }

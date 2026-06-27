@@ -28,10 +28,11 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->render(function (ModelNotFoundException $e, Request $request) {
             $modelo = class_basename($e->getModel());
             $mensajes = [
-                'Cancha'  => 'La cancha que buscas no existe o fue eliminada.',
-                'Tarifa'  => 'La tarifa que buscas no existe o fue eliminada.',
-                'Horario' => 'El horario que buscas no existe o fue eliminado.',
-                'User'    => 'El usuario que buscas no existe.',
+                'Cancha'   => 'La cancha que buscas no existe o fue eliminada.',
+                'Tarifa'   => 'La tarifa que buscas no existe o fue eliminada.',
+                'Horario'  => 'El horario que buscas no existe o fue eliminado.',
+                'Reserva'  => 'La reserva que buscas no existe o fue eliminada.',
+                'User'     => 'El usuario que buscas no existe.',
             ];
             $mensaje = $mensajes[$modelo] ?? 'El recurso que buscas no existe o fue eliminado.';
 

@@ -84,7 +84,7 @@
             @if($reserva->numero_operacion)
                 <div class="row"><span class="k">N° operacion</span><span class="v">{{ $reserva->numero_operacion }}</span><div class="clear"></div></div>
             @endif
-            <div class="row monto"><span class="k">Monto</span><span class="v">S/ {{ number_format($reserva->horario->tarifa->precio ?? 0, 2) }}</span><div class="clear"></div></div>
+            <div class="row monto"><span class="k">Monto</span><span class="v">S/ {{ number_format($reserva->monto_pagado, 2) }}</span><div class="clear"></div></div>
         </div>
 
         <div class="foot">

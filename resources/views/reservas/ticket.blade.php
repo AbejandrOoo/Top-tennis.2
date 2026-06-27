@@ -80,7 +80,7 @@
                 @endif
                 <div class="flex justify-between py-2 border-t border-gray-100">
                     <span class="text-gray-500">Monto</span>
-                    <span class="font-extrabold text-green-700 text-base">S/ {{ number_format($reserva->horario->tarifa->precio ?? 0, 2) }}</span>
+                    <span class="font-extrabold text-green-700 text-base">S/ {{ number_format($reserva->monto_pagado, 2) }}</span>
                 </div>
             </div>
 

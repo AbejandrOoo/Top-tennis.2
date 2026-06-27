@@ -22,12 +22,14 @@ class Reserva extends Model
         'metodo_pago',
         'numero_operacion',
         'estado_pago',
+        'monto_pagado',
         'codigo_validacion',
         'expira_at',
     ];
 
     protected $casts = [
-        'expira_at' => 'datetime',
+        'expira_at'    => 'datetime',
+        'monto_pagado' => 'decimal:2',
     ];
 
     public function user()
@@ -115,7 +117,7 @@ class Reserva extends Model
             'Cancha: '   . ($h->cancha->nombre ?? '-'),
             'Fecha: '    . optional($h->hora_inicio)->format('d/m/Y'),
             'Horario: '  . optional($h->hora_inicio)->format('H:i') . ' - ' . optional($h->hora_fin)->format('H:i'),
-            'Monto: S/ ' . number_format((float) ($h->tarifa->precio ?? 0), 2),
+            'Monto: S/ ' . number_format((float) $this->monto_pagado, 2),
             'Metodo: '   . $this->metodo_pago,
             'Estado: '   . $this->estado_pago,
             ($this->numero_operacion ? 'Operacion: ' . $this->numero_operacion : ''),

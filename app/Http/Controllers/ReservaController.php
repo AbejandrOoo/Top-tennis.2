@@ -57,8 +57,7 @@ class ReservaController extends Controller
         $reservas = $query->get();
 
         $totalIngresos = $esStaff
-            ? $reservas->where('estado_pago', 'aprobado')
-                ->sum(fn ($r) => (float) ($r->horario->tarifa->precio ?? 0))
+            ? $reservas->where('estado_pago', 'aprobado')->sum('monto_pagado')
             : 0;
 
         return view('reservas.index', compact('reservas', 'totalIngresos', 'esStaff'));
@@ -108,6 +107,8 @@ class ReservaController extends Controller
                     'metodo_pago'       => $request->metodo_pago,
                     'numero_operacion'  => $esYape ? $request->numero_operacion : null,
                     'estado_pago'       => $esYape ? Reserva::ESTADO_APROBADO : Reserva::ESTADO_PENDIENTE,
+                    // Snapshot inmutable del precio al momento de la reserva
+                    'monto_pagado'      => $horario->tarifa->precio,
                     // Solo Efectivo caduca: límite = hora_inicio - 30 min
                     'expira_at'         => $esYape ? null : $horario->hora_inicio->copy()->subMinutes(Reserva::MINUTOS_GRACIA),
                     'codigo_validacion' => Reserva::generarCodigoValidacion(),
@@ -180,8 +181,18 @@ class ReservaController extends Controller
         try {
             $this->autorizar($reserva);
 
+            // Una reserva anulada (no-show) ya liberó su horario; no tocarla.
+            if ($reserva->estado_pago === Reserva::ESTADO_ANULADA) {
+                return back()->withErrors(['general' => 'Esta reserva ya fue anulada y no puede cancelarse.']);
+            }
+
             DB::transaction(function () use ($reserva) {
-                $reserva->horario()->update(['estado' => 'disponible']);
+                // UPDATE condicional: solo libera si el horario aún está 'reservado'.
+                // Protege contra el caso en que liberarVencidas() actuó entre la
+                // verificación anterior y este UPDATE (mínima ventana TOCTOU).
+                Horario::where('id', $reserva->horario_id)
+                    ->where('estado', 'reservado')
+                    ->update(['estado' => 'disponible']);
                 $reserva->delete();
             });
 

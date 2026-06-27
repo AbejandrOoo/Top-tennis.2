@@ -94,6 +94,7 @@ class DatabaseSeeder extends Seeder
             'metodo_pago'       => 'Yape',
             'numero_operacion'  => '01234567',
             'estado_pago'       => Reserva::ESTADO_APROBADO,
+            'monto_pagado'      => $primero->tarifa->precio,
             'codigo_validacion' => Reserva::generarCodigoValidacion(),
         ]);
         $primero->update(['estado' => 'reservado']);
@@ -105,6 +106,7 @@ class DatabaseSeeder extends Seeder
             'horario_id'        => $segundo->id,
             'metodo_pago'       => 'Efectivo',
             'estado_pago'       => Reserva::ESTADO_PENDIENTE,
+            'monto_pagado'      => $segundo->tarifa->precio,
             'expira_at'         => $segundo->hora_inicio->copy()->subMinutes(Reserva::MINUTOS_GRACIA),
             'codigo_validacion' => Reserva::generarCodigoValidacion(),
         ]);
