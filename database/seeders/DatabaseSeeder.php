@@ -43,6 +43,8 @@ class DatabaseSeeder extends Seeder
             'nombre'               => 'Cancha Central',
             'tipo_superficie'      => 'Arcilla',
             'imagen'               => 'Arcilla.jpeg',
+            'modalidad'            => 'Singles',
+            'iluminacion'          => true,
             'estado_mantenimiento' => 'operativa',
         ]);
 
@@ -50,6 +52,8 @@ class DatabaseSeeder extends Seeder
             'nombre'               => 'Cancha Norte',
             'tipo_superficie'      => 'Sintética',
             'imagen'               => 'CespedArtificial.jpeg',
+            'modalidad'            => 'Dobles',
+            'iluminacion'          => true,
             'estado_mantenimiento' => 'operativa',
         ]);
 
@@ -57,7 +61,11 @@ class DatabaseSeeder extends Seeder
             'nombre'               => 'Cancha Sur',
             'tipo_superficie'      => 'Dura',
             'imagen'               => 'Dura.jpeg',
+            'modalidad'            => 'Ambos',
+            'iluminacion'          => false,
             'estado_mantenimiento' => 'en_mantenimiento',
+            'motivo_mantenimiento' => 'Reparación de superficie',
+            'fin_mantenimiento'    => now()->addDays(7),
         ]);
 
         // ===== Tarifas =====

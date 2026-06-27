@@ -117,6 +117,8 @@
                                         <span class="badge badge-green">Aprobado</span>
                                     @elseif($reserva->estado_pago === 'anulada')
                                         <span class="badge badge-red">Anulada</span>
+                                    @elseif($reserva->estado_pago === 'cancelado_por_mantenimiento')
+                                        <span class="badge badge-yellow">Canc. mantenimiento</span>
                                     @else
                                         <span class="badge badge-yellow">Pendiente</span>
                                     @endif

@@ -14,10 +14,18 @@ class Cancha extends Model
         'nombre',
         'tipo_superficie',
         'imagen',
+        'modalidad',
+        'iluminacion',
         'estado_mantenimiento',
+        'motivo_mantenimiento',
+        'fin_mantenimiento',
     ];
 
-    // Imágenes disponibles en public/images/ por tipo de superficie
+    protected $casts = [
+        'iluminacion'       => 'boolean',
+        'fin_mantenimiento' => 'datetime',
+    ];
+
     public const IMAGENES = [
         'Arcilla'   => 'Arcilla.jpeg',
         'Sintética' => 'CespedArtificial.jpeg',
@@ -25,10 +33,9 @@ class Cancha extends Model
         'Dura'      => 'Dura.jpeg',
     ];
 
-    /**
-     * URL pública de la imagen de la cancha.
-     * Usa la imagen asignada; si no tiene, toma la del tipo de superficie.
-     */
+    public const MODALIDADES   = ['Singles', 'Dobles', 'Ambos'];
+    public const SUPERFICIES   = ['Arcilla', 'Sintética', 'Hierba', 'Dura'];
+
     public function imagenUrl(): string
     {
         $archivo = $this->imagen ?? self::IMAGENES[$this->tipo_superficie] ?? 'Arcilla.jpeg';
@@ -40,10 +47,6 @@ class Cancha extends Model
         return $this->hasMany(Horario::class);
     }
 
-    /**
-     * Reservas futuras todavía activas (horario reservado con inicio en el futuro).
-     * Sirve para la regla de bloqueo por mantenimiento.
-     */
     public function reservasFuturasActivas()
     {
         return Reserva::whereHas('horario', function ($q) {
@@ -56,5 +59,21 @@ class Cancha extends Model
     public function estaOperativa(): bool
     {
         return $this->estado_mantenimiento === 'operativa';
+    }
+
+    /**
+     * Restaura automáticamente las canchas cuyo fin_mantenimiento ya pasó.
+     * Llamar en modo "lazy" al inicio de disponibles() y canchas.index.
+     */
+    public static function restaurarVencidas(): void
+    {
+        static::where('estado_mantenimiento', 'en_mantenimiento')
+            ->whereNotNull('fin_mantenimiento')
+            ->where('fin_mantenimiento', '<=', now())
+            ->update([
+                'estado_mantenimiento' => 'operativa',
+                'motivo_mantenimiento' => null,
+                'fin_mantenimiento'    => null,
+            ]);
     }
 }

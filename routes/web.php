@@ -47,12 +47,14 @@ Route::middleware('auth')->group(function () {
 // ===== CRUDs exclusivos del Admin =====
 Route::middleware(['auth', 'role:admin'])->group(function () {
     // Canchas
-    Route::get('/canchas',                 [CanchaController::class, 'index'])->name('canchas.index');
-    Route::get('/canchas/create',          [CanchaController::class, 'create'])->name('canchas.create');
-    Route::post('/canchas',                [CanchaController::class, 'store'])->name('canchas.store');
-    Route::get('/canchas/{cancha}/edit',   [CanchaController::class, 'edit'])->name('canchas.edit');
-    Route::patch('/canchas/{cancha}',      [CanchaController::class, 'update'])->name('canchas.update');
-    Route::delete('/canchas/{cancha}',     [CanchaController::class, 'destroy'])->name('canchas.destroy');
+    Route::get('/canchas',                           [CanchaController::class, 'index'])->name('canchas.index');
+    Route::get('/canchas/create',                    [CanchaController::class, 'create'])->name('canchas.create');
+    Route::post('/canchas',                          [CanchaController::class, 'store'])->name('canchas.store');
+    Route::get('/canchas/{cancha}/edit',             [CanchaController::class, 'edit'])->name('canchas.edit');
+    Route::patch('/canchas/{cancha}',                [CanchaController::class, 'update'])->name('canchas.update');
+    Route::delete('/canchas/{cancha}',               [CanchaController::class, 'destroy'])->name('canchas.destroy');
+    Route::post('/canchas/{cancha}/mantenimiento',   [CanchaController::class, 'ponerMantenimiento'])->name('canchas.mantenimiento');
+    Route::post('/canchas/{cancha}/restaurar',       [CanchaController::class, 'restaurar'])->name('canchas.restaurar');
 
     // Tarifas
     Route::get('/tarifas',                 [TarifaController::class, 'index'])->name('tarifas.index');

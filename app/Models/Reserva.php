@@ -13,9 +13,10 @@ class Reserva extends Model
     // Minutos antes de la hora_inicio en que caduca una reserva en Efectivo no pagada
     public const MINUTOS_GRACIA = 30;
 
-    public const ESTADO_PENDIENTE = 'pendiente';
-    public const ESTADO_APROBADO  = 'aprobado';
-    public const ESTADO_ANULADA   = 'anulada';
+    public const ESTADO_PENDIENTE              = 'pendiente';
+    public const ESTADO_APROBADO              = 'aprobado';
+    public const ESTADO_ANULADA               = 'anulada';
+    public const ESTADO_CANCELADO_MANT        = 'cancelado_por_mantenimiento';
 
     protected $fillable = [
         'user_id',
@@ -114,10 +115,10 @@ class Reserva extends Model
         return implode("\n", [
             'TOP TENNIS - TICKET DE RESERVA',
             'Codigo: '   . $this->codigo_validacion,
-            'Cliente: '  . ($this->user->name ?? '-'),
-            'Cancha: '   . (optional($h->cancha)->nombre ?? '-'),
-            'Fecha: '    . optional($h->hora_inicio)->format('d/m/Y'),
-            'Horario: '  . optional($h->hora_inicio)->format('H:i') . ' - ' . optional($h->hora_fin)->format('H:i'),
+            'Cliente: '  . ($this->user?->name ?? '-'),
+            'Cancha: '   . (optional($h?->cancha)->nombre ?? '-'),
+            'Fecha: '    . optional($h?->hora_inicio)->format('d/m/Y'),
+            'Horario: '  . optional($h?->hora_inicio)->format('H:i') . ' - ' . optional($h?->hora_fin)->format('H:i'),
             'Monto: S/ ' . number_format((float) $this->monto_pagado, 2),
             'Metodo: '   . $this->metodo_pago,
             'Estado: '   . $this->estado_pago,

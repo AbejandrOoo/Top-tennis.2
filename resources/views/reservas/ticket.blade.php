@@ -27,6 +27,8 @@
                     <span class="badge badge-green">✓ PAGADO</span>
                 @elseif($reserva->estado_pago === 'anulada')
                     <span class="badge badge-red">✕ ANULADA</span>
+                @elseif($reserva->estado_pago === 'cancelado_por_mantenimiento')
+                    <span class="badge badge-yellow">✕ CANCELADA POR MANTENIMIENTO</span>
                 @else
                     <span class="badge badge-yellow">⏳ PAGO PENDIENTE</span>
                 @endif
@@ -46,6 +48,13 @@
                         Esta reserva fue anulada por falta de pago. El horario fue liberado.
                     </p>
                 </div>
+            @elseif($reserva->estado_pago === 'cancelado_por_mantenimiento')
+                <div class="mx-5 mt-4 p-3 rounded-xl bg-amber-50 border border-amber-300">
+                    <p class="text-xs font-bold text-amber-700">
+                        Esta reserva fue cancelada porque la cancha entró en mantenimiento.
+                        Comunícate con recepción para gestionar tu reembolso.
+                    </p>
+                </div>
             @endif
 
             <div class="text-center py-5">
@@ -54,9 +63,16 @@
             </div>
 
             <div class="flex justify-center pb-5">
-                <div class="p-2 border border-gray-200 rounded-xl bg-white" style="width:240px;">
-                    {!! $qrSvg !!}
-                </div>
+                @if($qrSvg)
+                    <div class="p-2 border border-gray-200 rounded-xl bg-white" style="width:240px;">
+                        {!! $qrSvg !!}
+                    </div>
+                @else
+                    <div class="p-6 border border-dashed border-gray-200 rounded-xl bg-gray-50 text-center" style="width:240px;">
+                        <p class="text-xs text-gray-400">Código QR no disponible.</p>
+                        <p class="text-xs text-gray-400 mt-0.5">Muestre el código de validación en recepción.</p>
+                    </div>
+                @endif
             </div>
 
             <div class="px-7 pb-6 text-sm">

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\Rol;
 use App\Http\Requests\StoreReservaRequest;
+use App\Models\Cancha;
 use App\Models\Horario;
 use App\Models\Reserva;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -20,11 +21,12 @@ class ReservaController extends Controller
     /**
      * Listado de horarios disponibles para que el cliente reserve.
      */
-    public function disponibles(): View|RedirectResponse
+    public function disponibles(Request $request): View|RedirectResponse
     {
         try {
-            // Modo lazy: libera no-shows en Efectivo vencidos antes de listar,
-            // así los slots reaparecen aunque el scheduler no esté corriendo.
+            // Lazy: restaura canchas cuyo mantenimiento ya terminó
+            Cancha::restaurarVencidas();
+            // Lazy: libera no-shows en Efectivo vencidos
             Reserva::liberarVencidas();
 
             $horarios = Horario::reservables()
@@ -32,7 +34,12 @@ class ReservaController extends Controller
                 ->orderBy('hora_inicio')
                 ->get();
 
-            return view('reservas.disponibles', compact('horarios'));
+            // Canchas en mantenimiento para mostrarlas deshabilitadas al cliente
+            $canchasEnMantenimiento = Cancha::where('estado_mantenimiento', 'en_mantenimiento')
+                ->orderBy('nombre')
+                ->get();
+
+            return view('reservas.disponibles', compact('horarios', 'canchasEnMantenimiento'));
 
         } catch (\Throwable $e) {
             Log::error('Error al listar horarios disponibles', ['error' => $e->getMessage()]);
@@ -175,19 +182,27 @@ class ReservaController extends Controller
 
     public function ticket(Reserva $reserva): View|RedirectResponse
     {
+        // Fuera del try: abort(403) debe propagarse como respuesta HTTP correcta,
+        // no ser capturado y convertido en redirección al dashboard.
+        $this->autorizar($reserva);
+
         try {
-            $this->autorizar($reserva);
-
             $reserva->load(['horario.cancha', 'horario.tarifa', 'user']);
-            $qrSvg = $reserva->qrSvg();
-
-            return view('reservas.ticket', compact('reserva', 'qrSvg'));
-
         } catch (\Throwable $e) {
-            Log::error('Error al mostrar ticket', ['reserva_id' => $reserva->id, 'error' => $e->getMessage()]);
-
-            return redirect()->route('dashboard')->withErrors(['general' => 'No se pudo cargar el ticket.']);
+            Log::error('Error al cargar relaciones del ticket', ['reserva_id' => $reserva->id, 'error' => $e->getMessage()]);
+            return redirect()->route('reservas.index')
+                ->withErrors(['general' => 'No se pudo cargar el ticket.']);
         }
+
+        try {
+            $qrSvg = $reserva->qrSvg();
+        } catch (\Throwable $e) {
+            // Si el QR falla, mostrar ticket sin código QR (degradación elegante)
+            Log::warning('QR no disponible para ticket', ['reserva_id' => $reserva->id, 'error' => $e->getMessage()]);
+            $qrSvg = '';
+        }
+
+        return view('reservas.ticket', compact('reserva', 'qrSvg'));
     }
 
     public function descargarTicket(Reserva $reserva): Response|RedirectResponse
