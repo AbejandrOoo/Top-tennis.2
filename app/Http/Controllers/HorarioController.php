@@ -89,6 +89,12 @@ class HorarioController extends Controller
     public function update(UpdateHorarioRequest $request, Horario $horario): RedirectResponse
     {
         try {
+            if ($horario->estado === 'reservado') {
+                return back()->withErrors([
+                    'general' => 'No se puede modificar un horario que ya está reservado.',
+                ]);
+            }
+
             $horario->update($request->validated());
 
             return redirect()->route('horarios.index')

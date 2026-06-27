@@ -13,8 +13,27 @@ class Cancha extends Model
     protected $fillable = [
         'nombre',
         'tipo_superficie',
+        'imagen',
         'estado_mantenimiento',
     ];
+
+    // Imágenes disponibles en public/images/ por tipo de superficie
+    public const IMAGENES = [
+        'Arcilla'   => 'Arcilla.jpeg',
+        'Sintética' => 'CespedArtificial.jpeg',
+        'Hierba'    => 'Cesped.jpeg',
+        'Dura'      => 'Dura.jpeg',
+    ];
+
+    /**
+     * URL pública de la imagen de la cancha.
+     * Usa la imagen asignada; si no tiene, toma la del tipo de superficie.
+     */
+    public function imagenUrl(): string
+    {
+        $archivo = $this->imagen ?? self::IMAGENES[$this->tipo_superficie] ?? 'Arcilla.jpeg';
+        return asset('images/' . $archivo);
+    }
 
     public function horarios()
     {

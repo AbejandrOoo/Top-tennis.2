@@ -48,14 +48,13 @@
 </div>
 
 @if($horario)
-    <div class="mb-6">
-        <label for="estado" class="form-label">Estado</label>
-        <select id="estado" name="estado"
-                class="form-input {{ $errors->has('estado') ? 'border-red-400' : '' }}">
-            @foreach(['disponible' => 'Disponible', 'reservado' => 'Reservado'] as $val => $lbl)
-                <option value="{{ $val }}" {{ old('estado', $horario->estado) === $val ? 'selected' : '' }}>{{ $lbl }}</option>
-            @endforeach
-        </select>
-        @error('estado')<p class="mt-1.5 text-xs text-red-500">{{ $message }}</p>@enderror
+    <div class="mb-6 px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-sm text-gray-500">
+        Estado actual:
+        @if($horario->estado === 'disponible')
+            <span class="badge badge-green">Disponible</span>
+        @else
+            <span class="badge badge-gray">Reservado</span>
+        @endif
+        <p class="mt-1 text-xs text-gray-400">El estado lo gestiona automáticamente el flujo de reservas.</p>
     </div>
 @endif

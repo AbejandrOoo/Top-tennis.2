@@ -22,9 +22,9 @@ Route::get('/dashboard', function () {
             'tarifas'           => \App\Models\Tarifa::count(),
             'horarios_disp'     => \App\Models\Horario::where('estado', 'disponible')->count(),
             'reservas'          => \App\Models\Reserva::count(),
-            'ingresos'          => \App\Models\Reserva::where('estado_pago', 'aprobado')
-                ->with('horario.tarifa')->get()
-                ->sum(fn ($r) => (float) ($r->horario->tarifa->precio ?? 0)),
+            // Suma monto_pagado (precio congelado al momento de reservar),
+            // nunca tarifa->precio actual que puede haber cambiado.
+            'ingresos'          => (float) \App\Models\Reserva::where('estado_pago', 'aprobado')->sum('monto_pagado'),
         ];
 
         return view('dashboard', compact('esStaff', 'stats'));

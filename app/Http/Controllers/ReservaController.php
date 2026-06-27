@@ -251,7 +251,8 @@ class ReservaController extends Controller
         try {
             $user = auth()->user();
             if (! in_array($user->rol, [Rol::Admin, Rol::Recepcionista])) {
-                abort(403, 'Solo el personal puede confirmar pagos en efectivo.');
+                return redirect()->route('dashboard')
+                    ->with('error', 'Solo el personal puede confirmar pagos en efectivo.');
             }
 
             if ($reserva->metodo_pago !== 'Efectivo' || $reserva->estado_pago !== Reserva::ESTADO_PENDIENTE) {

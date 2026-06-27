@@ -17,9 +17,9 @@ class UpdateHorarioRequest extends FormRequest
         return [
             'cancha_id'   => ['required', 'exists:canchas,id'],
             'tarifa_id'   => ['required', 'exists:tarifas,id'],
-            'hora_inicio' => ['required', 'date'],
+            'hora_inicio' => ['required', 'date', 'after_or_equal:now'],
             'hora_fin'    => ['required', 'date', 'after:hora_inicio'],
-            'estado'      => ['required', 'in:disponible,reservado'],
+            // 'estado' no se edita manualmente: lo gestiona el flujo de reservas.
         ];
     }
 
@@ -57,9 +57,8 @@ class UpdateHorarioRequest extends FormRequest
             'tarifa_id.required'   => 'Debe seleccionar una tarifa.',
             'hora_inicio.required' => 'La fecha y hora de inicio es obligatoria.',
             'hora_fin.required'    => 'La fecha y hora de fin es obligatoria.',
-            'hora_fin.after'       => 'La hora de fin debe ser posterior a la de inicio.',
-            'estado.required'      => 'El estado es obligatorio.',
-            'estado.in'            => 'Estado inválido.',
+            'hora_inicio.after_or_equal' => 'El horario no puede empezar en el pasado.',
+            'hora_fin.after'             => 'La hora de fin debe ser posterior a la de inicio.',
         ];
     }
 }

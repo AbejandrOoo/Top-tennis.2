@@ -45,6 +45,9 @@ class Horario extends Model
     {
         return $query->where('estado', 'disponible')
             ->where('hora_inicio', '>', now())
-            ->whereHas('cancha', fn ($c) => $c->where('estado_mantenimiento', 'operativa'));
+            ->whereHas('cancha', fn ($c) => $c->where('estado_mantenimiento', 'operativa'))
+            // Excluir horarios cuya tarifa fue eliminada (soft-delete):
+            // sin tarifa no hay precio y el store() fallaría con error confuso.
+            ->whereHas('tarifa');
     }
 }

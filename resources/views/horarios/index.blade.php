@@ -28,13 +28,13 @@
                 <tbody class="divide-y divide-gray-100">
                     @forelse($horarios as $horario)
                         <tr>
-                            <td class="px-5 py-3 font-semibold text-gray-800">{{ $horario->cancha->nombre ?? '—' }}</td>
+                            <td class="px-5 py-3 font-semibold text-gray-800">{{ $horario->cancha?->nombre ?? '—' }}</td>
                             <td class="px-5 py-3 text-gray-600">
-                                {{ $horario->tarifa->nombre_tarifa ?? '—' }}
-                                <span class="text-green-700 font-semibold">(S/ {{ number_format($horario->tarifa->precio ?? 0, 2) }})</span>
+                                {{ $horario->tarifa?->nombre_tarifa ?? '—' }}
+                                <span class="text-green-700 font-semibold">(S/ {{ number_format($horario->tarifa?->precio ?? 0, 2) }})</span>
                             </td>
-                            <td class="px-5 py-3 text-gray-600">{{ $horario->hora_inicio->format('d/m/Y H:i') }}</td>
-                            <td class="px-5 py-3 text-gray-600">{{ $horario->hora_fin->format('H:i') }}</td>
+                            <td class="px-5 py-3 text-gray-600">{{ optional($horario->hora_inicio)->format('d/m/Y H:i') ?? '—' }}</td>
+                            <td class="px-5 py-3 text-gray-600">{{ optional($horario->hora_fin)->format('H:i') ?? '—' }}</td>
                             <td class="px-5 py-3">
                                 @if($horario->estado === 'disponible')
                                     <span class="badge badge-green">Disponible</span>

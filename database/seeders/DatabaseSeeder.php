@@ -42,18 +42,21 @@ class DatabaseSeeder extends Seeder
         $central = Cancha::create([
             'nombre'               => 'Cancha Central',
             'tipo_superficie'      => 'Arcilla',
+            'imagen'               => 'Arcilla.jpeg',
             'estado_mantenimiento' => 'operativa',
         ]);
 
         $norte = Cancha::create([
             'nombre'               => 'Cancha Norte',
             'tipo_superficie'      => 'Sintética',
+            'imagen'               => 'CespedArtificial.jpeg',
             'estado_mantenimiento' => 'operativa',
         ]);
 
         Cancha::create([
             'nombre'               => 'Cancha Sur',
-            'tipo_superficie'      => 'Arcilla',
+            'tipo_superficie'      => 'Dura',
+            'imagen'               => 'Dura.jpeg',
             'estado_mantenimiento' => 'en_mantenimiento',
         ]);
 
