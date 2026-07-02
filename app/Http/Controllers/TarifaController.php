@@ -10,6 +10,10 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 
+// CONTROLADOR DE TARIFAS (SOLO ADMIN): CRUD SIMPLE CON FormRequests
+// destroy() IMPIDE ELIMINAR TARIFAS CON HORARIOS ASOCIADOS (INTEGRIDAD REFERENCIAL)
+// IMPORTANTE: CAMBIAR EL PRECIO DE UNA TARIFA NO AFECTA RESERVAS YA HECHAS,
+// PORQUE reservas.monto_pagado GUARDA UN SNAPSHOT DEL PRECIO AL MOMENTO DE RESERVAR
 class TarifaController extends Controller
 {
     public function index(): View|RedirectResponse

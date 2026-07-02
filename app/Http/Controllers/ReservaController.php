@@ -19,6 +19,12 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 
+// CONTROLADOR DE RESERVAS: ORQUESTA EL FLUJO DE NEGOCIO PRINCIPAL DEL SISTEMA
+// FLUJO CLIENTE: disponibles() -> confirmar() -> store() -> ticket() / descargarTicket()
+// FLUJO STAFF:   crearManual() -> storeManual() | confirmarPago() (EFECTIVO) | index() (HISTORIAL)
+// SEGURIDAD: autorizar() VERIFICA DUEÑO-O-STAFF; StoreReservaRequest VALIDA LA ENTRADA;
+//            TODOS LOS METODOS USAN try/catch + Log PARA NO MOSTRAR ERRORES CRUDOS AL USUARIO
+// ANTI-DOBLE RESERVA (2 CAPAS): 1) UNIQUE horario_id EN BD  2) UPDATE ATOMICO CONDICIONAL EN store()
 class ReservaController extends Controller
 {
     /**
@@ -121,6 +127,10 @@ class ReservaController extends Controller
     /**
      * Procesa la reserva con pago (Yape o Efectivo) y emite el ticket.
      */
+    // METODO MAS IMPORTANTE DEL SISTEMA. TODO OCURRE DENTRO DE DB::transaction:
+    // SI CUALQUIER PASO FALLA, SE HACE ROLLBACK Y NADA QUEDA A MEDIAS.
+    // REGLA DE PAGO: Yape -> aprobado AL INSTANTE (EL CLIENTE YA PAGO, ADJUNTA N° OPERACION)
+    //                Efectivo -> pendiente HASTA QUE RECEPCION CONFIRME EN CAJA
     public function store(StoreReservaRequest $request): RedirectResponse
     {
         try {
@@ -343,6 +353,10 @@ class ReservaController extends Controller
     /**
      * Procesa una reserva manual creada por admin/recepción.
      */
+    // VALIDACION INLINE (NO FormRequest) PORQUE LAS REGLAS SON DINAMICAS:
+    // SI modo_cliente = 'nuevo' SE EXIGE NOMBRE (Y SE CREA UN USER CLIENTE AL VUELO),
+    // SI ES 'existente' SE EXIGE UN user_id VALIDO. EL PAGO SE APRUEBA DIRECTO
+    // PORQUE EL STAFF COBRA EN EL MOSTRADOR ANTES DE REGISTRAR.
     public function storeManual(Request $request): RedirectResponse
     {
         $rules = [
@@ -423,6 +437,9 @@ class ReservaController extends Controller
     /**
      * Solo el dueño de la reserva o el staff pueden verla/operarla.
      */
+    // AUTORIZACION A NIVEL DE OBJETO: EL MIDDLEWARE role: PROTEGE LA RUTA POR ROL,
+    // PERO ESTO PROTEGE EL REGISTRO CONCRETO (UN CLIENTE NO PUEDE VER EL TICKET DE OTRO
+    // CAMBIANDO EL ID EN LA URL). SI NO PASA -> abort(403).
     private function autorizar(Reserva $reserva): void
     {
         $user    = auth()->user();

@@ -5,6 +5,11 @@ namespace App\Http\Requests;
 use App\Models\Horario;
 use Illuminate\Foundation\Http\FormRequest;
 
+// FORM REQUEST: SACA LA VALIDACION DEL CONTROLADOR (PATRON SKINNY CONTROLLER)
+// rules()        -> REGLAS DECLARATIVAS (required, in, unique, required_if)
+// withValidator()-> REGLAS DE NEGOCIO QUE NECESITAN CONSULTAR LA BD
+//                   (HORARIO DISPONIBLE, A FUTURO, CANCHA OPERATIVA, PLAZO DE EFECTIVO)
+// messages()     -> MENSAJES DE ERROR EN ESPAÑOL PARA EL USUARIO
 class StoreReservaRequest extends FormRequest
 {
     public function authorize(): bool

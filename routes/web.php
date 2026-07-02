@@ -7,6 +7,13 @@ use App\Http\Controllers\ReservaController;
 use App\Http\Controllers\TarifaController;
 use Illuminate\Support\Facades\Route;
 
+// RUTAS WEB — ORGANIZADAS POR NIVEL DE ACCESO (MIDDLEWARE):
+//   publico                    -> welcome (landing)
+//   auth                       -> dashboard, perfil, flujo de reserva del cliente
+//   auth + role:admin          -> CRUD de canchas, tarifas y horarios
+//   auth + role:admin,recepcionista -> reserva manual y confirmar pago en efectivo
+// 'role:' ES EL MIDDLEWARE PERSONALIZADO RoleMiddleware (app/Http/Middleware)
+
 Route::get('/', function () {
     return view('welcome');
 });

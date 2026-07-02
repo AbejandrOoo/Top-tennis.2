@@ -5,6 +5,39 @@
 
 ---
 
+## 📑 Tabla de contenidos
+
+1. [Documentos del proyecto](#-documentos-del-proyecto)
+2. [Estructura general](#estructura-general)
+3. [⭐ Archivos críticos para la exposición](#-archivos-críticos-para-la-exposición)
+4. [🎾 Canchas](#-canchas)
+5. [💰 Tarifas](#-tarifas)
+6. [🕐 Horarios](#-horarios)
+7. [📋 Reservas](#-reservas)
+8. [👤 Users (usuarios y roles)](#-users-usuarios)
+9. [🔐 Auth (autenticación)](#-auth-autenticación)
+10. [🗂️ Rutas y configuración](#️-rutas-y-configuración)
+11. [🎨 Layouts y componentes](#-layouts-y-componentes-frontend)
+12. [⚠️ Páginas de error](#️-páginas-de-error)
+13. [🧪 Tests](#-tests)
+14. [📦 Archivos de configuración](#-archivos-de-configuración)
+15. [🔄 Relaciones entre modelos](#-relaciones-entre-modelos)
+16. [🧠 Conceptos clave (posibles preguntas del profesor)](#-conceptos-clave-posibles-preguntas-del-profesor)
+17. [🚀 Cómo ejecutar](#-cómo-ejecutar)
+
+---
+
+## 📚 Documentos del proyecto
+
+| Documento | Contenido |
+|---|---|
+| [INDEX.md](INDEX.md) | Este archivo: mapa de todo el código por módulo |
+| [DIAGRAMA-ER.md](DIAGRAMA-ER.md) | Diagrama entidad-relación, constraints, relaciones Eloquent y flujo de estados |
+| [CASOS-DE-USO.md](CASOS-DE-USO.md) | Diagramas de casos de uso por rol (Cliente, Recepcionista, Admin, Scheduler) + especificaciones detalladas |
+| [README.md](README.md) | Readme del proyecto |
+
+---
+
 ## Estructura General
 
 ```
@@ -17,6 +50,26 @@ Top-tennis.2/
 ├── public/               → Assets públicos (imágenes, favicon)
 └── tests/                → Tests automatizados
 ```
+
+---
+
+## ⭐ Archivos críticos para la exposición
+
+> Los archivos que el profesor probablemente pida abrir y explicar. Todos tienen
+> comentarios internos que resumen su responsabilidad y sus reglas de negocio.
+
+| # | Archivo | Qué explicar | Pregunta típica que responde |
+|---|---------|--------------|------------------------------|
+| 1 | [ReservaController.php](app/Http/Controllers/ReservaController.php) | El flujo completo cliente→pago→ticket. El método `store()` es el corazón: transacción + UPDATE atómico anti-doble-reserva | "¿Qué pasa si dos clientes reservan el mismo horario a la vez?" |
+| 2 | [Reserva.php](app/Models/Reserva.php) | Estados de pago, `liberarVencidas()` (no-shows con `lockForUpdate`), generación del QR en SVG sin GD | "¿Cómo se anulan las reservas que no pagan?" / "¿Cómo generas el QR?" |
+| 3 | [StoreReservaRequest.php](app/Http/Requests/StoreReservaRequest.php) | FormRequest: reglas declarativas + `withValidator()` para reglas de negocio contra la BD | "¿Dónde está la validación? ¿Por qué no en el controlador?" |
+| 4 | [RoleMiddleware.php](app/Http/Middleware/RoleMiddleware.php) | Middleware propio `role:admin,recepcionista`: control de acceso por rol con redirección amigable | "¿Cómo controlas que un cliente no entre a las pantallas del admin?" |
+| 5 | [Rol.php](app/enums/Rol.php) | Backed enum de PHP 8.1 en vez de strings sueltos; casteado en el modelo User | "¿Por qué un enum y no un string o una tabla de roles?" |
+| 6 | [Horario.php](app/Models/Horario.php) | Tabla puente Cancha–Tarifa; scope `reservables()` (disponible + futuro + cancha operativa + tarifa) | "¿Qué horarios ve el cliente y por qué?" |
+| 7 | [CanchaController.php](app/Http/Controllers/CanchaController.php) | `ponerMantenimiento()`: transacción que cancela reservas afectadas y registra reembolsos | "¿Qué pasa con las reservas si una cancha entra a mantenimiento?" |
+| 8 | [HorarioController.php](app/Http/Controllers/HorarioController.php) | `store()`: generación masiva fecha × cancha × hora con tarifa día/noche; cambio de tarifa en lote | "¿Cómo generas cientos de horarios sin cargarlos a mano?" |
+| 9 | [web.php](routes/web.php) | Rutas agrupadas por nivel de acceso (público / auth / admin / staff) | "¿Dónde se define quién accede a qué?" |
+| 10 | [LiberarReservasVencidas.php](app/Console/Commands/LiberarReservasVencidas.php) + [console.php](routes/console.php) | Comando programado cada minuto + modo lazy de respaldo | "¿Y si el servidor no tiene cron corriendo?" |
 
 ---
 
@@ -92,7 +145,7 @@ Top-tennis.2/
 
 | Archivo | Ubicación | Función |
 |---------|-----------|---------|
-| [HorarioController.php](app/Http/Controllers/HorarioController.php) | `app/Http/Controllers/` | Controlador: listado por fecha/cancha, generación masiva de slots (rango de fechas × rango de horas × canchas), edición individual, eliminación por día completo |
+| [HorarioController.php](app/Http/Controllers/HorarioController.php) | `app/Http/Controllers/` | Controlador: listado por fecha/cancha, generación masiva de slots (rango de fechas × rango de horas × canchas, con tarifa día/noche), edición individual, eliminación por día completo y cambio de tarifa en lote (`cambiarTarifaMasiva`) |
 | [Horario.php (Model)](app/Models/Horario.php) | `app/Models/` | Modelo: campos cancha_id, tarifa_id, hora_inicio, hora_fin, estado. Scope `reservables()` filtra slots disponibles, futuros y de canchas operativas |
 | [StoreHorarioRequest.php](app/Http/Requests/StoreHorarioRequest.php) | `app/Http/Requests/` | Validación al crear horario |
 | [UpdateHorarioRequest.php](app/Http/Requests/UpdateHorarioRequest.php) | `app/Http/Requests/` | Validación al editar horario |
@@ -114,6 +167,7 @@ Top-tennis.2/
 | PATCH | `/horarios/{id}` | Actualizar slot |
 | DELETE | `/horarios/{id}` | Eliminar slot |
 | DELETE | `/horarios-dia` | Eliminar todos los slots de un día |
+| POST | `/horarios/cambiar-tarifa` | Cambiar la tarifa de varios slots en lote (solo disponibles) |
 
 ---
 
@@ -323,6 +377,31 @@ Tarifa (1) ── (N) ────┘
 - Una **Tarifa** tiene muchos **Horarios**
 - Un **Horario** tiene una **Reserva** (o ninguna)
 - Una **Reserva** pertenece a un **User** y a un **Horario**
+
+> Diagrama completo con campos, constraints y flujo de estados en [DIAGRAMA-ER.md](DIAGRAMA-ER.md).
+> Diagramas de casos de uso por rol en [CASOS-DE-USO.md](CASOS-DE-USO.md).
+
+---
+
+## 🧠 Conceptos clave (posibles preguntas del profesor)
+
+| Concepto | Dónde está | Explicación en una frase |
+|---|---|---|
+| **Race condition / doble reserva** | `ReservaController::store()` + migración de reservas | Dos capas: constraint `UNIQUE` en `reservas.horario_id` (la BD rechaza la segunda) y `UPDATE ... WHERE estado='disponible'` atómico (si afecta 0 filas, otro ganó el slot y se hace rollback) |
+| **Transacciones (`DB::transaction`)** | `store()`, `storeManual()`, `cancelar()`, `ponerMantenimiento()`, `liberarVencidas()` | Agrupan varios cambios en una operación todo-o-nada: si algo falla, la BD queda como estaba |
+| **`lockForUpdate`** | `Reserva::liberarVencidas()` | Bloquea las filas leídas dentro de la transacción para que el job automático y un pago en caja no toquen la misma reserva a la vez |
+| **Snapshot de precio (`monto_pagado`)** | Tabla `reservas`, se llena en `store()` | El precio se congela al reservar; si el admin cambia la tarifa después, los tickets e ingresos históricos no se alteran |
+| **SoftDeletes (borrado lógico)** | Modelos `Cancha`, `Tarifa`, `Horario`, `Reserva` | `delete()` solo llena `deleted_at`; el registro sigue en la BD para auditoría e integridad de datos históricos |
+| **FormRequest (skinny controller)** | `app/Http/Requests/` | La validación vive en clases dedicadas; el controlador recibe datos ya validados con `$request->validated()` |
+| **Middleware de roles** | `RoleMiddleware` + `web.php` | `role:admin` o `role:admin,recepcionista` en la ruta; si el rol no está en la lista, redirige al dashboard con mensaje según el rol |
+| **Enum de PHP 8.1** | `App\Enums\Rol` + cast en `User` | Tipado fuerte de roles: la BD guarda el string pero el código trabaja con `Rol::Admin`, sin strings mágicos |
+| **Route Model Binding** | Todas las rutas con `{cancha}`, `{horario}`, `{reserva}` | Laravel inyecta el modelo ya buscado por ID (404 automático si no existe) |
+| **Scope de Eloquent** | `Horario::reservables()`, `Reserva::vencidas()` | Consultas reutilizables con nombre de negocio en lugar de repetir `where` por todos lados |
+| **Scheduler + modo lazy** | `console.php` + llamadas en controladores | El comando corre cada minuto; como respaldo, las vistas clave ejecutan la misma lógica al cargarse (funciona incluso sin cron) |
+| **Autorización a nivel de objeto** | `ReservaController::autorizar()` | Además del rol, se verifica que la reserva sea del usuario (o que sea staff); evita acceder a tickets ajenos cambiando el ID de la URL |
+| **try/catch + Log en cada método** | Todos los controladores | El usuario nunca ve un error crudo de Laravel: se registra en el log y se redirige con un mensaje claro en español |
+| **QR sin extensión GD** | `Reserva::qrSvg()` | `bacon/bacon-qr-code` renderiza a SVG (vectorial, sin GD); corrección de errores nivel H (~30%) para tolerar el logo en el centro |
+| **PDF del ticket** | `ReservaController::descargarTicket()` | `barryvdh/laravel-dompdf` renderiza la vista Blade `ticket-pdf` a un PDF A5 descargable |
 
 ---
 

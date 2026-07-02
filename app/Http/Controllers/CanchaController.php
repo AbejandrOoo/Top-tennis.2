@@ -13,6 +13,11 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 
+// CONTROLADOR DE CANCHAS (SOLO ADMIN): CRUD + MANTENIMIENTO + RESTAURACION
+// SKINNY CONTROLLER: LA VALIDACION VIVE EN StoreCanchaRequest / UpdateCanchaRequest
+// REGLA CLAVE: ponerMantenimiento() CANCELA LAS RESERVAS APROBADAS AFECTADAS
+//              Y REGISTRA EL REEMBOLSO DE CADA UNA (TODO EN UNA TRANSACCION)
+// destroy(): BORRADO LOGICO (SoftDeletes) Y BLOQUEADO SI LA CANCHA TIENE HORARIOS
 class CanchaController extends Controller
 {
     public function index(): View|RedirectResponse
