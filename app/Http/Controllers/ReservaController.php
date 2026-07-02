@@ -21,10 +21,11 @@ use Illuminate\View\View;
 
 // CONTROLADOR DE RESERVAS: ORQUESTA EL FLUJO DE NEGOCIO PRINCIPAL DEL SISTEMA
 // FLUJO CLIENTE: disponibles() -> confirmar() -> store() -> ticket() / descargarTicket()
-// FLUJO STAFF:   crearManual() -> storeManual() | confirmarPago() (EFECTIVO) | index() (HISTORIAL)
-// SEGURIDAD: autorizar() VERIFICA DUEÑO-O-STAFF; StoreReservaRequest VALIDA LA ENTRADA;
+// FLUJO ADMIN:   crearManual() -> storeManual() | confirmarPago() (EFECTIVO) | index() (HISTORIAL)
+// SEGURIDAD: autorizar() VERIFICA DUEÑO-O-ADMIN; StoreReservaRequest VALIDA LA ENTRADA;
 //            TODOS LOS METODOS USAN try/catch + Log PARA NO MOSTRAR ERRORES CRUDOS AL USUARIO
-// ANTI-DOBLE RESERVA (2 CAPAS): 1) UNIQUE horario_id EN BD  2) UPDATE ATOMICO CONDICIONAL EN store()
+// ANTI-DOBLE RESERVA: UPDATE ATOMICO CONDICIONAL EN store() (WHERE estado='disponible';
+//            SI AFECTA 0 FILAS, OTRO USUARIO TOMO EL SLOT PRIMERO Y SE HACE ROLLBACK)
 class ReservaController extends Controller
 {
     /**
@@ -58,14 +59,14 @@ class ReservaController extends Controller
     }
 
     /**
-     * Listado de reservas: admin/recepción ven todas (con filtro y total);
+     * Listado de reservas: el admin ve todas (con filtro y total);
      * el cliente ve solo las suyas.
      */
     public function index(Request $request): View|RedirectResponse
     {
         try {
             $user    = auth()->user();
-            $esStaff = in_array($user->rol, [Rol::Admin, Rol::Recepcionista]);
+            $esStaff = $user->rol === Rol::Admin;
 
             $query = Reserva::with(['horario.cancha', 'horario.tarifa', 'user'])->latest();
 
@@ -272,15 +273,15 @@ class ReservaController extends Controller
     }
 
     /**
-     * Recepción confirma un pago en Efectivo (pendiente → aprobado).
+     * El administrador confirma un pago en Efectivo (pendiente → aprobado).
      */
     public function confirmarPago(Reserva $reserva): RedirectResponse
     {
         try {
             $user = auth()->user();
-            if (! in_array($user->rol, [Rol::Admin, Rol::Recepcionista])) {
+            if ($user->rol !== Rol::Admin) {
                 return redirect()->route('dashboard')
-                    ->with('error', 'Solo el personal puede confirmar pagos en efectivo.');
+                    ->with('error', 'Solo el administrador puede confirmar pagos en efectivo.');
             }
 
             if ($reserva->metodo_pago !== 'Efectivo' || $reserva->estado_pago !== Reserva::ESTADO_PENDIENTE) {
@@ -303,7 +304,7 @@ class ReservaController extends Controller
     }
 
     /**
-     * Formulario para que admin/recepción cree una reserva manual.
+     * Formulario para que el administrador cree una reserva manual.
      */
     public function crearManual(): View|RedirectResponse
     {
@@ -351,12 +352,12 @@ class ReservaController extends Controller
     }
 
     /**
-     * Procesa una reserva manual creada por admin/recepción.
+     * Procesa una reserva manual creada por el administrador.
      */
     // VALIDACION INLINE (NO FormRequest) PORQUE LAS REGLAS SON DINAMICAS:
     // SI modo_cliente = 'nuevo' SE EXIGE NOMBRE (Y SE CREA UN USER CLIENTE AL VUELO),
     // SI ES 'existente' SE EXIGE UN user_id VALIDO. EL PAGO SE APRUEBA DIRECTO
-    // PORQUE EL STAFF COBRA EN EL MOSTRADOR ANTES DE REGISTRAR.
+    // PORQUE EL ADMIN COBRA EN EL MOSTRADOR ANTES DE REGISTRAR.
     public function storeManual(Request $request): RedirectResponse
     {
         $rules = [
@@ -435,7 +436,7 @@ class ReservaController extends Controller
     }
 
     /**
-     * Solo el dueño de la reserva o el staff pueden verla/operarla.
+     * Solo el dueño de la reserva o el administrador pueden verla/operarla.
      */
     // AUTORIZACION A NIVEL DE OBJETO: EL MIDDLEWARE role: PROTEGE LA RUTA POR ROL,
     // PERO ESTO PROTEGE EL REGISTRO CONCRETO (UN CLIENTE NO PUEDE VER EL TICKET DE OTRO
@@ -443,9 +444,9 @@ class ReservaController extends Controller
     private function autorizar(Reserva $reserva): void
     {
         $user    = auth()->user();
-        $esStaff = in_array($user->rol, [Rol::Admin, Rol::Recepcionista]);
+        $esAdmin = $user->rol === Rol::Admin;
 
-        if (! $esStaff && $reserva->user_id !== $user->id) {
+        if (! $esAdmin && $reserva->user_id !== $user->id) {
             abort(403, 'No tienes permiso para acceder a esta reserva.');
         }
     }

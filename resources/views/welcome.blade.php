@@ -125,7 +125,7 @@
         </p>
         <div class="flex flex-wrap gap-3 mb-10">
             @auth
-                @php $esStaff = in_array(auth()->user()->rol->value, ['Admin','Recepcionista']); @endphp
+                @php $esStaff = auth()->user()->rol === \App\Enums\Rol::Admin; @endphp
                 <a href="{{ $esStaff ? route('dashboard') : route('reservas.disponibles') }}" class="btn-green">
                     {{ $esStaff ? 'Panel de administración' : 'Reservar ahora' }} &rsaquo;
                 </a>
@@ -221,7 +221,7 @@
             </div>
         </div>
         @auth
-            @php $esStaff = $esStaff ?? in_array(auth()->user()->rol->value, ['Admin','Recepcionista']); @endphp
+            @php $esStaff = $esStaff ?? (auth()->user()->rol === \App\Enums\Rol::Admin); @endphp
             <a href="{{ $esStaff ? route('dashboard') : route('reservas.disponibles') }}" class="btn-green text-base px-8 py-3">Comenzar ahora &rsaquo;</a>
         @else
             <a href="{{ route('register') }}" class="btn-green text-base px-8 py-3">Comenzar ahora &rsaquo;</a>
@@ -270,7 +270,7 @@
         </div>
         <div class="text-center mt-8">
             @auth
-                @php $esStaff = $esStaff ?? in_array(auth()->user()->rol->value, ['Admin','Recepcionista']); @endphp
+                @php $esStaff = $esStaff ?? (auth()->user()->rol === \App\Enums\Rol::Admin); @endphp
                 <a href="{{ $esStaff ? route('canchas.index') : route('reservas.disponibles') }}" class="btn-outline inline-flex">
                     {{ $esStaff ? 'Gestionar canchas' : 'Ver horarios disponibles' }}
                 </a>
@@ -289,7 +289,7 @@
         <p class="text-gray-500 mb-8">Regístrate gratis y reserva tu primera cancha en menos de 2 minutos</p>
         <div class="flex flex-wrap justify-center gap-3">
             @auth
-                @php $esStaff = $esStaff ?? in_array(auth()->user()->rol->value, ['Admin','Recepcionista']); @endphp
+                @php $esStaff = $esStaff ?? (auth()->user()->rol === \App\Enums\Rol::Admin); @endphp
                 <a href="{{ $esStaff ? route('dashboard') : route('reservas.disponibles') }}" class="btn-green text-base">
                     {{ $esStaff ? 'Panel de administración' : 'Reservar ahora' }} &rsaquo;
                 </a>

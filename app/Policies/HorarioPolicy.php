@@ -8,7 +8,7 @@ use App\Models\User;
 
 class HorarioPolicy
 {
-    // Admin y Recepcionista ven todos; Cliente solo los suyos (manejado en controller)
+    // Admin ve todos; Cliente solo los suyos (manejado en controller)
     public function viewAny(User $user): bool
     {
         return true;
@@ -16,7 +16,7 @@ class HorarioPolicy
 
     public function view(User $user, Horario $horario): bool
     {
-        if (in_array($user->rol, [Rol::Admin, Rol::Recepcionista])) {
+        if ($user->rol === Rol::Admin) {
             return true;
         }
 
@@ -29,10 +29,10 @@ class HorarioPolicy
         return true;
     }
 
-    // Admin y Recepcionista editan cualquiera; Cliente solo los suyos en estado Reservado
+    // Admin edita cualquiera; Cliente solo los suyos en estado Reservado
     public function update(User $user, Horario $horario): bool
     {
-        if (in_array($user->rol, [Rol::Admin, Rol::Recepcionista])) {
+        if ($user->rol === Rol::Admin) {
             return true;
         }
 

@@ -6,7 +6,6 @@ namespace App\Enums;
 // ESTO EVITA STRINGS SUELTOS Y DA AUTOCOMPLETADO EN EL IDE
 // EL VALOR STRING SE GUARDA EN LA COLUMNA 'rol' DE LA TABLA USERS
 enum Rol: string {
-    case Admin = 'admin';              // ACCESO TOTAL: CRUD CANCHAS, TARIFAS, HORARIOS, RESERVAS
-    case Recepcionista = 'recepcionista'; // PUEDE CREAR RESERVAS MANUALES Y CONFIRMAR PAGOS
-    case Cliente = 'cliente';          // SOLO PUEDE RESERVAR Y VER SUS PROPIAS RESERVAS
+    case Admin = 'admin';     // ACCESO TOTAL: CRUD CANCHAS, TARIFAS, HORARIOS, RESERVAS, PAGOS
+    case Cliente = 'cliente'; // SOLO PUEDE RESERVAR Y VER SUS PROPIAS RESERVAS
 }

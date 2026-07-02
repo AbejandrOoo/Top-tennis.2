@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 // MIDDLEWARE PERSONALIZADO: CONTROLA EL ACCESO POR ROL A LAS RUTAS
-// SE REGISTRA EN ROUTES COMO ->middleware('role:admin') O ->middleware('role:admin,recepcionista')
+// SE REGISTRA EN ROUTES COMO ->middleware('role:admin')
 // SI EL ROL DEL USUARIO NO ESTA EN LA LISTA, REDIRIGE AL DASHBOARD CON MENSAJE DE ERROR
 class RoleMiddleware
 {
@@ -34,8 +34,7 @@ class RoleMiddleware
 
         // Mensaje específico según el rol del usuario
         $mensajes = [
-            Rol::Cliente->value       => 'Acceso denegado. Esa sección es exclusiva para el personal del club.',
-            Rol::Recepcionista->value => 'Acceso denegado. Solo el administrador puede acceder a esa sección.',
+            Rol::Cliente->value => 'Acceso denegado. Esa sección es exclusiva para el administrador del club.',
         ];
 
         $mensaje = $mensajes[$user->rol->value]

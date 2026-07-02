@@ -9,12 +9,12 @@ class TarifaPolicy
 {
     public function create(User $user): bool
     {
-        return in_array($user->rol, [Rol::Admin, Rol::Recepcionista]);
+        return $user->rol === Rol::Admin;
     }
 
     public function update(User $user): bool
     {
-        return in_array($user->rol, [Rol::Admin, Rol::Recepcionista]);
+        return $user->rol === Rol::Admin;
     }
 
     public function delete(User $user): bool

@@ -7,9 +7,9 @@
 
 ## 📑 Tabla de contenidos
 
-1. [Documentos del proyecto](#-documentos-del-proyecto)
+1. [Documentación del proyecto](#-documentación-del-proyecto)
 2. [Estructura general](#estructura-general)
-3. [⭐ Archivos críticos para la exposición](#-archivos-críticos-para-la-exposición)
+3. [🧩 Componentes principales del sistema](#-componentes-principales-del-sistema)
 4. [🎾 Canchas](#-canchas)
 5. [💰 Tarifas](#-tarifas)
 6. [🕐 Horarios](#-horarios)
@@ -22,19 +22,21 @@
 13. [🧪 Tests](#-tests)
 14. [📦 Archivos de configuración](#-archivos-de-configuración)
 15. [🔄 Relaciones entre modelos](#-relaciones-entre-modelos)
-16. [🧠 Conceptos clave (posibles preguntas del profesor)](#-conceptos-clave-posibles-preguntas-del-profesor)
-17. [🚀 Cómo ejecutar](#-cómo-ejecutar)
+16. [🚀 Cómo ejecutar](#-cómo-ejecutar)
 
 ---
 
-## 📚 Documentos del proyecto
+## 📚 Documentación del proyecto
 
 | Documento | Contenido |
 |---|---|
+| [README.md](README.md) | Presentación del proyecto, stack, instalación y usuarios de prueba |
 | [INDEX.md](INDEX.md) | Este archivo: mapa de todo el código por módulo |
-| [DIAGRAMA-ER.md](DIAGRAMA-ER.md) | Diagrama entidad-relación, constraints, relaciones Eloquent y flujo de estados |
-| [CASOS-DE-USO.md](CASOS-DE-USO.md) | Diagramas de casos de uso por rol (Cliente, Recepcionista, Admin, Scheduler) + especificaciones detalladas |
-| [README.md](README.md) | Readme del proyecto |
+| [docs/arquitectura.md](docs/arquitectura.md) | Capas del sistema, patrones aplicados y conceptos técnicos |
+| [docs/modelo-de-datos.md](docs/modelo-de-datos.md) | Diagrama entidad-relación, constraints, relaciones Eloquent y flujo de estados |
+| [docs/casos-de-uso.md](docs/casos-de-uso.md) | Diagramas de casos de uso del sistema por actor + especificaciones detalladas |
+| [docs/casos-de-uso-negocio.md](docs/casos-de-uso-negocio.md) | Casos de uso de negocio y trazabilidad hacia el sistema |
+| [docs/reglas-de-negocio.md](docs/reglas-de-negocio.md) | Catálogo de reglas de negocio con su ubicación en el código |
 
 ---
 
@@ -47,29 +49,32 @@ Top-tennis.2/
 ├── routes/               → Definición de rutas
 ├── database/             → Migraciones, factories, seeders
 ├── config/               → Configuración de Laravel
+├── docs/                 → Documentación técnica y funcional
 ├── public/               → Assets públicos (imágenes, favicon)
 └── tests/                → Tests automatizados
 ```
 
 ---
 
-## ⭐ Archivos críticos para la exposición
+## 🧩 Componentes principales del sistema
 
-> Los archivos que el profesor probablemente pida abrir y explicar. Todos tienen
-> comentarios internos que resumen su responsabilidad y sus reglas de negocio.
+> Archivos centrales para comprender la arquitectura y las reglas de negocio.
+> Cada uno incluye comentarios internos que resumen su responsabilidad.
 
-| # | Archivo | Qué explicar | Pregunta típica que responde |
-|---|---------|--------------|------------------------------|
+| # | Archivo | Qué resuelve | Pregunta que responde |
+|---|---------|--------------|-----------------------|
 | 1 | [ReservaController.php](app/Http/Controllers/ReservaController.php) | El flujo completo cliente→pago→ticket. El método `store()` es el corazón: transacción + UPDATE atómico anti-doble-reserva | "¿Qué pasa si dos clientes reservan el mismo horario a la vez?" |
-| 2 | [Reserva.php](app/Models/Reserva.php) | Estados de pago, `liberarVencidas()` (no-shows con `lockForUpdate`), generación del QR en SVG sin GD | "¿Cómo se anulan las reservas que no pagan?" / "¿Cómo generas el QR?" |
-| 3 | [StoreReservaRequest.php](app/Http/Requests/StoreReservaRequest.php) | FormRequest: reglas declarativas + `withValidator()` para reglas de negocio contra la BD | "¿Dónde está la validación? ¿Por qué no en el controlador?" |
-| 4 | [RoleMiddleware.php](app/Http/Middleware/RoleMiddleware.php) | Middleware propio `role:admin,recepcionista`: control de acceso por rol con redirección amigable | "¿Cómo controlas que un cliente no entre a las pantallas del admin?" |
+| 2 | [Reserva.php](app/Models/Reserva.php) | Estados de pago, `liberarVencidas()` (no-shows con `lockForUpdate`), generación del QR en SVG sin GD | "¿Cómo se anulan las reservas que no pagan?" / "¿Cómo se genera el QR?" |
+| 3 | [StoreReservaRequest.php](app/Http/Requests/StoreReservaRequest.php) | FormRequest: reglas declarativas + `withValidator()` para reglas de negocio contra la BD | "¿Dónde está la validación y por qué no en el controlador?" |
+| 4 | [RoleMiddleware.php](app/Http/Middleware/RoleMiddleware.php) | Middleware propio `role:admin`: control de acceso por rol con redirección amigable | "¿Cómo se impide que un cliente entre a las pantallas del admin?" |
 | 5 | [Rol.php](app/enums/Rol.php) | Backed enum de PHP 8.1 en vez de strings sueltos; casteado en el modelo User | "¿Por qué un enum y no un string o una tabla de roles?" |
 | 6 | [Horario.php](app/Models/Horario.php) | Tabla puente Cancha–Tarifa; scope `reservables()` (disponible + futuro + cancha operativa + tarifa) | "¿Qué horarios ve el cliente y por qué?" |
 | 7 | [CanchaController.php](app/Http/Controllers/CanchaController.php) | `ponerMantenimiento()`: transacción que cancela reservas afectadas y registra reembolsos | "¿Qué pasa con las reservas si una cancha entra a mantenimiento?" |
-| 8 | [HorarioController.php](app/Http/Controllers/HorarioController.php) | `store()`: generación masiva fecha × cancha × hora con tarifa día/noche; cambio de tarifa en lote | "¿Cómo generas cientos de horarios sin cargarlos a mano?" |
-| 9 | [web.php](routes/web.php) | Rutas agrupadas por nivel de acceso (público / auth / admin / staff) | "¿Dónde se define quién accede a qué?" |
-| 10 | [LiberarReservasVencidas.php](app/Console/Commands/LiberarReservasVencidas.php) + [console.php](routes/console.php) | Comando programado cada minuto + modo lazy de respaldo | "¿Y si el servidor no tiene cron corriendo?" |
+| 8 | [HorarioController.php](app/Http/Controllers/HorarioController.php) | `store()`: generación masiva fecha × cancha × hora con tarifa día/noche; cambio de tarifa en lote | "¿Cómo se generan cientos de horarios sin cargarlos a mano?" |
+| 9 | [web.php](routes/web.php) | Rutas agrupadas por nivel de acceso (público / auth / admin) | "¿Dónde se define quién accede a qué?" |
+| 10 | [LiberarReservasVencidas.php](app/Console/Commands/LiberarReservasVencidas.php) + [console.php](routes/console.php) | Comando programado cada minuto + modo lazy de respaldo | "¿Y si el servidor no tiene el scheduler corriendo?" |
+
+> Los conceptos técnicos detrás de estos componentes (transacciones, `lockForUpdate`, SoftDeletes, scopes, etc.) están explicados en [docs/arquitectura.md](docs/arquitectura.md).
 
 ---
 
@@ -87,7 +92,7 @@ Top-tennis.2/
 | [CanchaFactory.php](database/factories/CanchaFactory.php) | `database/factories/` | Factory para generar canchas de prueba (testing/seeders) |
 | [create_canchas_table.php](database/migrations/2026_06_20_154029_create_canchas_table.php) | `database/migrations/` | Migración: crea la tabla `canchas` |
 | [add_imagen_to_canchas.php](database/migrations/2026_06_27_025448_add_imagen_to_canchas_table.php) | `database/migrations/` | Migración: agrega campo `imagen` a canchas |
-| [add_fields_to_canchas.php](database/migrations/2026_06_27_100000_add_fields_to_canchas_table.php) | `database/migrations/` | Migración: agrega campos extras (modalidad, iluminación, estado_mantenimiento) |
+| [add_fields_to_canchas.php](database/migrations/2026_06_27_100000_add_fields_to_canchas_table.php) | `database/migrations/` | Migración: agrega campos extras (modalidad, iluminación, motivo/fin de mantenimiento) |
 | [add_inicio_mantenimiento.php](database/migrations/2026_06_27_102754_add_inicio_mantenimiento_to_canchas_table.php) | `database/migrations/` | Migración: agrega campo `inicio_mantenimiento` |
 | [rename_sintetica.php](database/migrations/2026_06_27_110000_rename_sintetica_to_cesped_artificial.php) | `database/migrations/` | Migración: renombra valor de superficie |
 | [index.blade.php](resources/views/canchas/index.blade.php) | `resources/views/canchas/` | Vista: listado de todas las canchas con acciones |
@@ -174,25 +179,25 @@ Top-tennis.2/
 ## 📋 RESERVAS
 
 > Flujo completo: cliente ve horarios disponibles → confirma → paga (Yape o Efectivo) → recibe ticket con QR.
-> Admin/Recepción pueden crear reservas manuales, confirmar pagos en efectivo y ver historial completo.
+> El Admin puede crear reservas manuales, confirmar pagos en efectivo y ver el historial completo.
 
 | Archivo | Ubicación | Función |
 |---------|-----------|---------|
-| [ReservaController.php](app/Http/Controllers/ReservaController.php) | `app/Http/Controllers/` | Controlador principal. Métodos: `disponibles()` lista slots reservables, `confirmar()` muestra formulario de pago, `store()` procesa reserva con anti-race condition atómico, `ticket()` muestra ticket digital, `descargarTicket()` genera PDF, `cancelar()` libera horario, `confirmarPago()` aprueba pago en efectivo, `crearManual()`/`storeManual()` reserva manual por staff |
+| [ReservaController.php](app/Http/Controllers/ReservaController.php) | `app/Http/Controllers/` | Controlador principal. Métodos: `disponibles()` lista slots reservables, `confirmar()` muestra formulario de pago, `store()` procesa reserva con anti-race condition atómico, `ticket()` muestra ticket digital, `descargarTicket()` genera PDF, `cancelar()` libera horario, `confirmarPago()` aprueba pago en efectivo, `crearManual()`/`storeManual()` reserva manual del admin |
 | [Reserva.php (Model)](app/Models/Reserva.php) | `app/Models/` | Modelo: campos user_id, horario_id, metodo_pago, numero_operacion, estado_pago, monto_pagado, codigo_validacion, expira_at. Métodos: `liberarVencidas()` anula no-shows, `generarCodigoValidacion()` genera código TT-XXXX, `qrSvg()` genera QR con logo, `contenidoQr()` texto del QR |
 | [StoreReservaRequest.php](app/Http/Requests/StoreReservaRequest.php) | `app/Http/Requests/` | Validación al crear reserva (metodo_pago, numero_operacion si es Yape) |
 | [ReservaFactory.php](database/factories/ReservaFactory.php) | `database/factories/` | Factory para testing |
 | [create_reservas_table.php](database/migrations/2026_06_26_221313_create_reservas_table.php) | `database/migrations/` | Migración: crea tabla `reservas` |
 | [add_monto_pagado.php](database/migrations/2026_06_27_022127_add_monto_pagado_to_reservas_table.php) | `database/migrations/` | Migración: agrega `monto_pagado` (snapshot del precio) |
-| [drop_unique_horario.php](database/migrations/2026_06_27_030434_drop_unique_horario_id_from_reservas_table.php) | `database/migrations/` | Migración: quita constraint unique de horario_id |
-| [update_estado_pago_enum.php](database/migrations/2026_06_27_100001_update_estado_pago_enum_in_reservas_table.php) | `database/migrations/` | Migración: actualiza enum de estado_pago |
+| [drop_unique_horario.php](database/migrations/2026_06_27_030434_drop_unique_horario_id_from_reservas_table.php) | `database/migrations/` | Migración: quita el constraint unique de horario_id para permitir re-reservas de horarios liberados |
+| [update_estado_pago_enum.php](database/migrations/2026_06_27_100001_update_estado_pago_enum_in_reservas_table.php) | `database/migrations/` | Migración: agrega `cancelado_por_mantenimiento` al enum de estado_pago |
 | [LiberarReservasVencidas.php](app/Console/Commands/LiberarReservasVencidas.php) | `app/Console/Commands/` | Comando artisan `reservas:liberar-vencidas`: anula reservas en Efectivo cuyo plazo de pago expiró y libera el horario |
 | [disponibles.blade.php](resources/views/reservas/disponibles.blade.php) | `resources/views/reservas/` | Vista: catálogo de horarios disponibles para reservar |
 | [confirmar.blade.php](resources/views/reservas/confirmar.blade.php) | `resources/views/reservas/` | Vista: formulario de confirmación y pago (Yape/Efectivo) |
 | [index.blade.php](resources/views/reservas/index.blade.php) | `resources/views/reservas/` | Vista: historial de reservas (admin ve todas, cliente ve las suyas) |
 | [ticket.blade.php](resources/views/reservas/ticket.blade.php) | `resources/views/reservas/` | Vista: ticket digital con código QR |
 | [ticket-pdf.blade.php](resources/views/reservas/ticket-pdf.blade.php) | `resources/views/reservas/` | Vista: versión PDF del ticket para descarga |
-| [crear-manual.blade.php](resources/views/reservas/crear-manual.blade.php) | `resources/views/reservas/` | Vista: formulario para que admin/recepción cree reserva manual |
+| [crear-manual.blade.php](resources/views/reservas/crear-manual.blade.php) | `resources/views/reservas/` | Vista: formulario para que el admin cree una reserva manual |
 
 ### Rutas de Reservas
 | Método | URL | Acceso | Acción |
@@ -201,12 +206,12 @@ Top-tennis.2/
 | GET | `/reservas` | Auth | Historial de reservas |
 | GET | `/reservar/{horario}/confirmar` | Auth | Formulario de pago |
 | POST | `/reservas` | Auth | Procesar reserva |
-| GET | `/reservas/crear-manual` | Admin/Recepción | Formulario reserva manual |
-| POST | `/reservas/manual` | Admin/Recepción | Guardar reserva manual |
-| GET | `/reservas/{id}/ticket` | Auth (dueño/staff) | Ver ticket digital |
-| GET | `/reservas/{id}/ticket/pdf` | Auth (dueño/staff) | Descargar ticket PDF |
-| DELETE | `/reservas/{id}` | Auth (dueño/staff) | Cancelar reserva |
-| PATCH | `/reservas/{id}/confirmar-pago` | Admin/Recepción | Confirmar pago en efectivo |
+| GET | `/reservas/crear-manual` | Admin | Formulario reserva manual |
+| POST | `/reservas/manual` | Admin | Guardar reserva manual |
+| GET | `/reservas/{id}/ticket` | Auth (dueño/admin) | Ver ticket digital |
+| GET | `/reservas/{id}/ticket/pdf` | Auth (dueño/admin) | Descargar ticket PDF |
+| DELETE | `/reservas/{id}` | Auth (dueño/admin) | Cancelar reserva |
+| PATCH | `/reservas/{id}/confirmar-pago` | Admin | Confirmar pago en efectivo |
 
 ### Lógica de negocio importante
 - **Anti-race condition**: `store()` usa UPDATE atómico condicional para evitar doble reserva
@@ -215,17 +220,19 @@ Top-tennis.2/
 - **Código de validación**: formato `TT-XXXX` único por reserva
 - **QR**: genera SVG con logo de pelota de tennis en el centro
 
+> El catálogo completo de reglas está en [docs/reglas-de-negocio.md](docs/reglas-de-negocio.md).
+
 ---
 
 ## 👤 USERS (Usuarios)
 
-> Sistema de usuarios con 3 roles: Admin, Recepcionista, Cliente.
+> Sistema de usuarios con 2 roles: Admin y Cliente.
 
 | Archivo | Ubicación | Función |
 |---------|-----------|---------|
 | [User.php (Model)](app/Models/User.php) | `app/Models/` | Modelo: campos name, email, telefono, password, rol (enum), emoji_perfil. Relación hasMany con Reserva |
-| [Rol.php (Enum)](app/enums/Rol.php) | `app/enums/` | Enum PHP: `Admin`, `Recepcionista`, `Cliente`. Define los 3 roles del sistema |
-| [RoleMiddleware.php](app/Http/Middleware/RoleMiddleware.php) | `app/Http/Middleware/` | Middleware `role:admin,recepcionista`: verifica que el usuario tenga el rol requerido para acceder a la ruta |
+| [Rol.php (Enum)](app/enums/Rol.php) | `app/enums/` | Enum PHP: `Admin`, `Cliente`. Define los 2 roles del sistema |
+| [RoleMiddleware.php](app/Http/Middleware/RoleMiddleware.php) | `app/Http/Middleware/` | Middleware `role:admin`: verifica que el usuario tenga el rol requerido para acceder a la ruta |
 | [ProfileController.php](app/Http/Controllers/ProfileController.php) | `app/Http/Controllers/` | Controlador de perfil: editar nombre/email, cambiar contraseña, eliminar cuenta |
 | [ProfileUpdateRequest.php](app/Http/Requests/ProfileUpdateRequest.php) | `app/Http/Requests/` | Validación al actualizar perfil |
 | [UserFactory.php](database/factories/UserFactory.php) | `database/factories/` | Factory para generar usuarios de prueba |
@@ -240,8 +247,7 @@ Top-tennis.2/
 ### Roles y permisos
 | Rol | Puede hacer |
 |-----|-------------|
-| **Admin** | Todo: CRUD canchas, tarifas, horarios, ver todas las reservas, confirmar pagos, crear reservas manuales |
-| **Recepcionista** | Ver reservas, confirmar pagos en efectivo, crear reservas manuales |
+| **Admin** | Todo: CRUD canchas, tarifas, horarios, ver todas las reservas, confirmar pagos en efectivo, crear reservas manuales, dashboard financiero |
 | **Cliente** | Reservar canchas, ver sus propias reservas, descargar tickets |
 
 ---
@@ -278,11 +284,11 @@ Top-tennis.2/
 |---------|-----------|---------|
 | [web.php](routes/web.php) | `routes/` | **Archivo principal de rutas**. Define TODAS las rutas web: dashboard, canchas, tarifas, horarios, reservas, perfil |
 | [auth.php](routes/auth.php) | `routes/` | Rutas de autenticación (login, registro, etc.) |
-| [console.php](routes/console.php) | `routes/` | Comandos de consola programados |
+| [console.php](routes/console.php) | `routes/` | Comandos de consola programados (scheduler) |
 | [app.php (bootstrap)](bootstrap/app.php) | `bootstrap/` | Configuración de la aplicación Laravel |
 | [providers.php](bootstrap/providers.php) | `bootstrap/` | Proveedores de servicios |
 | [AppServiceProvider.php](app/Providers/AppServiceProvider.php) | `app/Providers/` | Proveedor de servicios principal |
-| [DatabaseSeeder.php](database/seeders/DatabaseSeeder.php) | `database/seeders/` | Seeder: datos iniciales de la BD |
+| [DatabaseSeeder.php](database/seeders/DatabaseSeeder.php) | `database/seeders/` | Seeder: datos iniciales de la BD (usuarios, canchas, tarifas, horarios y reservas de ejemplo) |
 
 ---
 
@@ -378,30 +384,7 @@ Tarifa (1) ── (N) ────┘
 - Un **Horario** tiene una **Reserva** (o ninguna)
 - Una **Reserva** pertenece a un **User** y a un **Horario**
 
-> Diagrama completo con campos, constraints y flujo de estados en [DIAGRAMA-ER.md](DIAGRAMA-ER.md).
-> Diagramas de casos de uso por rol en [CASOS-DE-USO.md](CASOS-DE-USO.md).
-
----
-
-## 🧠 Conceptos clave (posibles preguntas del profesor)
-
-| Concepto | Dónde está | Explicación en una frase |
-|---|---|---|
-| **Race condition / doble reserva** | `ReservaController::store()` + migración de reservas | Dos capas: constraint `UNIQUE` en `reservas.horario_id` (la BD rechaza la segunda) y `UPDATE ... WHERE estado='disponible'` atómico (si afecta 0 filas, otro ganó el slot y se hace rollback) |
-| **Transacciones (`DB::transaction`)** | `store()`, `storeManual()`, `cancelar()`, `ponerMantenimiento()`, `liberarVencidas()` | Agrupan varios cambios en una operación todo-o-nada: si algo falla, la BD queda como estaba |
-| **`lockForUpdate`** | `Reserva::liberarVencidas()` | Bloquea las filas leídas dentro de la transacción para que el job automático y un pago en caja no toquen la misma reserva a la vez |
-| **Snapshot de precio (`monto_pagado`)** | Tabla `reservas`, se llena en `store()` | El precio se congela al reservar; si el admin cambia la tarifa después, los tickets e ingresos históricos no se alteran |
-| **SoftDeletes (borrado lógico)** | Modelos `Cancha`, `Tarifa`, `Horario`, `Reserva` | `delete()` solo llena `deleted_at`; el registro sigue en la BD para auditoría e integridad de datos históricos |
-| **FormRequest (skinny controller)** | `app/Http/Requests/` | La validación vive en clases dedicadas; el controlador recibe datos ya validados con `$request->validated()` |
-| **Middleware de roles** | `RoleMiddleware` + `web.php` | `role:admin` o `role:admin,recepcionista` en la ruta; si el rol no está en la lista, redirige al dashboard con mensaje según el rol |
-| **Enum de PHP 8.1** | `App\Enums\Rol` + cast en `User` | Tipado fuerte de roles: la BD guarda el string pero el código trabaja con `Rol::Admin`, sin strings mágicos |
-| **Route Model Binding** | Todas las rutas con `{cancha}`, `{horario}`, `{reserva}` | Laravel inyecta el modelo ya buscado por ID (404 automático si no existe) |
-| **Scope de Eloquent** | `Horario::reservables()`, `Reserva::vencidas()` | Consultas reutilizables con nombre de negocio en lugar de repetir `where` por todos lados |
-| **Scheduler + modo lazy** | `console.php` + llamadas en controladores | El comando corre cada minuto; como respaldo, las vistas clave ejecutan la misma lógica al cargarse (funciona incluso sin cron) |
-| **Autorización a nivel de objeto** | `ReservaController::autorizar()` | Además del rol, se verifica que la reserva sea del usuario (o que sea staff); evita acceder a tickets ajenos cambiando el ID de la URL |
-| **try/catch + Log en cada método** | Todos los controladores | El usuario nunca ve un error crudo de Laravel: se registra en el log y se redirige con un mensaje claro en español |
-| **QR sin extensión GD** | `Reserva::qrSvg()` | `bacon/bacon-qr-code` renderiza a SVG (vectorial, sin GD); corrección de errores nivel H (~30%) para tolerar el logo en el centro |
-| **PDF del ticket** | `ReservaController::descargarTicket()` | `barryvdh/laravel-dompdf` renderiza la vista Blade `ticket-pdf` a un PDF A5 descargable |
+> Diagrama completo con campos, constraints y flujo de estados en [docs/modelo-de-datos.md](docs/modelo-de-datos.md).
 
 ---
 
@@ -423,3 +406,5 @@ php artisan migrate --seed
 php artisan serve
 npm run dev
 ```
+
+> Instrucciones detalladas (XAMPP, scripts `.bat`, scheduler) en el [README.md](README.md).

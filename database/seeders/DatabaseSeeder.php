@@ -24,13 +24,6 @@ class DatabaseSeeder extends Seeder
             'rol'      => Rol::Admin,
         ]);
 
-        User::create([
-            'name'     => 'Recepcionista',
-            'email'    => 'recepcionista@toptennis.com',
-            'password' => Hash::make('password'),
-            'rol'      => Rol::Recepcionista,
-        ]);
-
         $cliente = User::create([
             'name'     => 'Cliente Demo',
             'email'    => 'cliente@toptennis.com',

@@ -8,10 +8,10 @@ use App\Http\Controllers\TarifaController;
 use Illuminate\Support\Facades\Route;
 
 // RUTAS WEB — ORGANIZADAS POR NIVEL DE ACCESO (MIDDLEWARE):
-//   publico                    -> welcome (landing)
-//   auth                       -> dashboard, perfil, flujo de reserva del cliente
-//   auth + role:admin          -> CRUD de canchas, tarifas y horarios
-//   auth + role:admin,recepcionista -> reserva manual y confirmar pago en efectivo
+//   publico           -> welcome (landing)
+//   auth              -> dashboard, perfil, flujo de reserva del cliente
+//   auth + role:admin -> CRUD de canchas, tarifas y horarios,
+//                        reserva manual y confirmación de pagos en efectivo
 // 'role:' ES EL MIDDLEWARE PERSONALIZADO RoleMiddleware (app/Http/Middleware)
 
 Route::get('/', function () {
@@ -20,7 +20,7 @@ Route::get('/', function () {
 
 Route::get('/dashboard', function () {
     $user    = auth()->user();
-    $esStaff = in_array($user->rol, [\App\Enums\Rol::Admin, \App\Enums\Rol::Recepcionista]);
+    $esStaff = $user->rol === \App\Enums\Rol::Admin;
 
     if ($esStaff) {
         $stats = [
@@ -89,17 +89,17 @@ Route::middleware('auth')->group(function () {
     Route::get('/reservar/{horario}/confirmar',    [ReservaController::class, 'confirmar'])->name('reservas.confirmar');
     Route::post('/reservas',                       [ReservaController::class, 'store'])->name('reservas.store');
 
-    // Reserva manual (admin/recepción) — DEBE ir antes de {reserva} routes
+    // Reserva manual (solo admin) — DEBE ir antes de {reserva} routes
     Route::get('/reservas/crear-manual', [ReservaController::class, 'crearManual'])
-        ->middleware('role:admin,recepcionista')->name('reservas.crearManual');
+        ->middleware('role:admin')->name('reservas.crearManual');
     Route::post('/reservas/manual', [ReservaController::class, 'storeManual'])
-        ->middleware('role:admin,recepcionista')->name('reservas.storeManual');
+        ->middleware('role:admin')->name('reservas.storeManual');
 
     Route::get('/reservas/{reserva}/ticket',       [ReservaController::class, 'ticket'])->name('reservas.ticket');
     Route::get('/reservas/{reserva}/ticket/pdf',   [ReservaController::class, 'descargarTicket'])->name('reservas.ticket.pdf');
     Route::delete('/reservas/{reserva}',           [ReservaController::class, 'cancelar'])->name('reservas.cancelar');
     Route::patch('/reservas/{reserva}/confirmar-pago', [ReservaController::class, 'confirmarPago'])
-        ->middleware('role:admin,recepcionista')->name('reservas.confirmarPago');
+        ->middleware('role:admin')->name('reservas.confirmarPago');
 });
 
 require __DIR__.'/auth.php';

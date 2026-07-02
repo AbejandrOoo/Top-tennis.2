@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-// MODELO USER: USUARIO DEL SISTEMA CON 3 ROLES (admin, recepcionista, cliente)
+// MODELO USER: USUARIO DEL SISTEMA CON 2 ROLES (admin, cliente)
 // EL CAST 'rol' => Rol::class CONVIERTE EL STRING DE LA BD AL ENUM PHP AUTOMATICAMENTE
 // EL CAST 'password' => 'hashed' HASHEA LA CONTRASEÑA (BCRYPT) AL ASIGNARLA
 // RELACION: UN USER TIENE MUCHAS RESERVAS (1:N)

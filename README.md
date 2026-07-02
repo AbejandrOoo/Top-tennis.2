@@ -15,7 +15,20 @@
 
 ## Descripción
 
-Top Tennis es una aplicación web para la gestión integral de un club de tenis. Permite al administrador configurar canchas, tarifas y horarios disponibles; a los clientes reservar esos horarios pagando con **Yape** (inmediato) o **Efectivo** (presencial); y al personal confirmar cobros y monitorear ingresos desde un dashboard financiero.
+Top Tennis es una aplicación web para la gestión integral de un club de tenis. Permite al administrador configurar canchas, tarifas y horarios disponibles; a los clientes reservar esos horarios pagando con **Yape** (inmediato) o **Efectivo** (presencial); y al administrador confirmar cobros y monitorear ingresos desde un dashboard financiero.
+
+---
+
+## Documentación
+
+| Documento | Contenido |
+|---|---|
+| [INDEX.md](INDEX.md) | Índice de código: mapa de todos los archivos por módulo |
+| [docs/arquitectura.md](docs/arquitectura.md) | Capas del sistema, patrones y conceptos técnicos |
+| [docs/modelo-de-datos.md](docs/modelo-de-datos.md) | Diagrama ER, constraints y flujo de estados |
+| [docs/casos-de-uso.md](docs/casos-de-uso.md) | Casos de uso del sistema por actor, con diagramas |
+| [docs/casos-de-uso-negocio.md](docs/casos-de-uso-negocio.md) | Casos de uso de negocio y trazabilidad |
+| [docs/reglas-de-negocio.md](docs/reglas-de-negocio.md) | Catálogo de reglas de negocio |
 
 ---
 
@@ -27,8 +40,8 @@ Top Tennis es una aplicación web para la gestión integral de un club de tenis.
 - **Reservas con doble método de pago** — Yape (aprobado al instante) y Efectivo (pendiente con plazo)
 - **Regla de no-show** — reservas en Efectivo sin pagar a 30 min del partido se anulan automáticamente y liberan el slot
 - **Ticket digital** — código `#TT-xxxx` único + QR SVG (sin dependencia de GD/Imagick) descargable en PDF
-- **Anti-race condition** — UPDATE atómico en BD + constraint `UNIQUE(horario_id)` impiden doble reserva simultánea
-- **Dashboard financiero** — admin y recepcionista ven todas las reservas con total de ingresos confirmados
+- **Anti-race condition** — UPDATE atómico condicional en BD impide la doble reserva simultánea del mismo slot
+- **Dashboard financiero** — el administrador ve todas las reservas con total de ingresos confirmados
 - **Control de acceso por roles** — middleware `RoleMiddleware` protege todas las rutas; intento de acceso no autorizado redirige al dashboard con mensaje de error
 - **Soft Deletes** en todas las tablas de negocio para trazabilidad completa
 
@@ -38,8 +51,7 @@ Top Tennis es una aplicación web para la gestión integral de un club de tenis.
 
 | Rol | Puede hacer |
 |---|---|
-| `admin` | CRUD de canchas, tarifas y horarios · ver todas las reservas · confirmar pagos en efectivo · dashboard financiero |
-| `recepcionista` | Ver todas las reservas · confirmar pagos en efectivo |
+| `admin` | CRUD de canchas, tarifas y horarios · ver todas las reservas · confirmar pagos en efectivo · crear reservas manuales · dashboard financiero |
 | `cliente` | Ver horarios disponibles · crear reservas · ver sus tickets · cancelar sus reservas |
 
 > Un cliente que intenta acceder a `/canchas`, `/tarifas` o `/horarios` es redirigido automáticamente al dashboard con un banner de "Acceso denegado".
@@ -96,10 +108,9 @@ php artisan serve            # levanta en http://127.0.0.1:8000
 | Email | Contraseña | Rol |
 |---|---|---|
 | admin@toptennis.com | password | Administrador |
-| recepcionista@toptennis.com | password | Recepcionista |
 | cliente@toptennis.com | password | Cliente |
 
-El seeder también crea 3 canchas, 3 tarifas, 6 horarios a futuro y 2 reservas de ejemplo (1 Yape aprobada, 1 Efectivo pendiente).
+El seeder también crea 4 canchas (una en mantenimiento), 2 tarifas (día y noche), horarios de 7 días (06:00–22:00) en las canchas operativas y 2 reservas de ejemplo (1 Yape aprobada, 1 Efectivo pendiente).
 
 ---
 
@@ -153,7 +164,7 @@ erDiagram
     reservas {
         bigint      id                  PK
         bigint      user_id             FK
-        bigint      horario_id          FK "UK"
+        bigint      horario_id          FK
         enum        metodo_pago
         string      numero_operacion    "UK nullable"
         enum        estado_pago
@@ -171,7 +182,7 @@ erDiagram
     users    ||--o{ reservas  : "realiza"
 ```
 
-Ver [DIAGRAMA-ER.md](DIAGRAMA-ER.md) para el diagrama completo con constraints, relaciones Eloquent y flujo de estados.
+Ver [docs/modelo-de-datos.md](docs/modelo-de-datos.md) para el diagrama completo con constraints, relaciones Eloquent y flujo de estados.
 
 ---
 
@@ -182,7 +193,7 @@ app/
 ├── Console/Commands/
 │   └── LiberarReservasVencidas.php   # Artisan: reservas:liberar-vencidas
 ├── Enums/
-│   └── Rol.php                       # Enum: admin | recepcionista | cliente
+│   └── Rol.php                       # Enum: admin | cliente
 ├── Http/
 │   ├── Controllers/
 │   │   ├── CanchaController.php      # CRUD admin (canchas)
@@ -201,9 +212,9 @@ app/
 │   ├── Horario.php                   # scopeReservables()
 │   └── Reserva.php                   # scopeVencidas() · liberarVencidas() · qrSvg()
 database/
-├── migrations/                       # 10 migraciones ordenadas
+├── migrations/                       # 16 migraciones ordenadas
 └── seeders/
-    └── DatabaseSeeder.php            # 3 usuarios · 3 canchas · 3 tarifas · 6 slots · 2 reservas
+    └── DatabaseSeeder.php            # 2 usuarios · 4 canchas · 2 tarifas · slots de 7 días · 2 reservas
 resources/views/
 ├── reservas/
 │   ├── disponibles.blade.php
@@ -214,7 +225,7 @@ resources/views/
 ├── canchas/ tarifas/ horarios/       # Vistas CRUD admin
 └── errors/                           # 403 · 404 · 419 · 429 · 500 personalizados
 routes/
-├── web.php                           # Rutas protegidas por middleware role:admin / role:admin,recepcionista
+├── web.php                           # Rutas protegidas por middleware role:admin
 └── console.php                       # Schedule: reservas:liberar-vencidas cada minuto
 ```
 
@@ -225,9 +236,9 @@ routes/
 | Ruta | Middleware | Quién accede |
 |---|---|---|
 | `/canchas/*`, `/tarifas/*`, `/horarios/*` | `auth + role:admin` | Solo Admin |
-| `/reservas/{id}/confirmar-pago` | `auth + role:admin,recepcionista` | Admin y Recepcionista |
+| `/reservas/crear-manual`, `/reservas/manual`, `/reservas/{id}/confirmar-pago` | `auth + role:admin` | Solo Admin |
 | `/reservar`, `/reservas/*` | `auth` | Cualquier usuario autenticado |
-| Ticket/cancelar ajeno | `auth` + `autorizar()` en controller | Dueño o staff |
+| Ticket/cancelar ajeno | `auth` + `autorizar()` en controller | Dueño o admin |
 
 ---
 
